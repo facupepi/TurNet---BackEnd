@@ -25,5 +25,7 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: false
         },
-    });
+    }, {
+        tableName: 'cliente', // Nombre de la tabla en la base de datos
+      });
 };

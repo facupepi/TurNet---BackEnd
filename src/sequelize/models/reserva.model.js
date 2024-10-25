@@ -32,5 +32,7 @@ module.exports = (sequelize) => {
             type: DataTypes.TIME,
             allowNull: false
         }
-    });
+    }, {
+        tableName: 'reserva', // Nombre de la tabla en la base de datos
+      });
 };

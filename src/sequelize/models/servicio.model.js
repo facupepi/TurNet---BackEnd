@@ -24,5 +24,7 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING, // Descripción del período disponible para reserva
             allowNull: false
         }
-    });
+    }, {
+        tableName: 'servicio', // Nombre de la tabla en la base de datos
+      });
 };

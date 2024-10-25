@@ -1,26 +1,27 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-    // Definimos el modelo 'horarios_laborales'
-    return sequelize.define('horarios_laborales', {
-        id_servicio: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'servicios', // Nombre de la tabla de servicios
-                key: 'id',
-            },
-        },
-        id_horario: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'horarios', // Nombre de la tabla de horarios
-                key: 'id',
-            },
-        },
-    }, {
-        tableName: 'horarios_laborales', // Nombre de la tabla en la base de datos
-        timestamps: true, // Si deseas mantener createdAt y updatedAt
-    });
+  return sequelize.define('horarios_laborales', {
+    id_servicio: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'servicio', // Nombre de la tabla de servicios
+        key: 'id',
+      },
+      onDelete: 'CASCADE' // Eliminación en cascada si el servicio se elimina
+    },
+    id_horario: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'horario', // Nombre de la tabla de horarios
+        key: 'id',
+      },
+      onDelete: 'CASCADE' // Eliminación en cascada si el horario se elimina
+    }
+  }, {
+    tableName: 'horarios_laborales', // Nombre de la tabla en la base de datos
+    timestamps: false, // No necesitas createdAt y updatedAt para tablas intermedias
+  });
 };

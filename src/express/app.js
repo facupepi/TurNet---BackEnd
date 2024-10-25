@@ -11,7 +11,8 @@ const routes = {
     reservas: require('./routes/reservas'),  // Ruta para gestionar 'servicios'
     horarios: require('./routes/horarios'),  // Ruta para gestionar 'horarios'
     dias: require('./routes/dias'),  // Ruta para gestionar 'dias'
-    horarios_laborales: require('./routes/horarios_laborales'),  // Ruta para gestionar 'horarios_laborales'
+    horarios_laborales: require('./routes/horarios_laborales'),  // Ruta para gestionar 'horarios_laborales',
+    dias_laborales: require('./routes/dias_laborales'),  // Ruta para gestionar 'dias_laborales',
 };
 
 // Inicializamos una instancia de la aplicación Express.
@@ -81,20 +82,8 @@ for (const [routeName, routeController] of Object.entries(routes)) {
 }
 
 // Definimos rutas adicionales específicas que no siguen el patrón REST.
-
-//app.post('/horarios_laborales', makeHandlerAwareOfAsyncErrors(routes.horarios_laborales.create));
-
-// Esta ruta obtiene los items asociados a una orden específica (id de la orden).
-/*
-app.get(`/orders/:id/items`,
-    makeHandlerAwareOfAsyncErrors(routes.orders.listItems)  // Maneja errores async en 'listItems'.
-);
-
-// Esta ruta permite agregar items a una orden específica.
-app.post(`/orders/:id/items`,
-    makeHandlerAwareOfAsyncErrors(routes.orders.addItem)  // Maneja errores async en 'addItem'.
-);
-*/
+app.get('/servicios/:id_servicio/horarios_laborales', makeHandlerAwareOfAsyncErrors(routes.horarios_laborales.getHorariosByServicio));
+app.get('/reservas/service/:id_servicio/date/:fecha/', makeHandlerAwareOfAsyncErrors(routes.reservas.getReservasByServiceByDay));
 
 // Exportamos la aplicación para poder ser utilizada en otro lugar (como en 'index.js' o para pruebas).
 module.exports = app;

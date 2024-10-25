@@ -11,7 +11,9 @@ module.exports = (sequelize) => {
             type: DataTypes.TIME,
             allowNull: false // Hora específica de trabajo
         }
-    });
+    }, {
+        tableName: 'horario', // Nombre de la tabla en la base de datos
+      });
 
     // Hook para crear los horarios automáticamente después de sincronizar la tabla
     horario.afterSync(async () => {
@@ -31,7 +33,7 @@ module.exports = (sequelize) => {
                 
                 horarios.push({ hora });
 
-                minutes += 5;
+                minutes += 1;
                 if (minutes === 60) {
                     minutes = 0;
                     hours++;

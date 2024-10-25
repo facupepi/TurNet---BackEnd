@@ -21,5 +21,7 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: false
         }
-    });
+    }, {
+        tableName: 'admin', // Nombre de la tabla en la base de datos
+      });
 };

@@ -14,10 +14,6 @@ const sequelize = new Sequelize({
 	storage: 'db.sqlite',  // Especificamos la ubicación del archivo de la base de datos.
 	logQueryParameters: true,  // Activa el registro de los parámetros de las consultas (útil para depuración).
 	benchmark: true, // Muestra el tiempo que tarda cada consulta en ejecutarse (también útil para depuración).
-	dialectOptions: {
-        // Esto incrementa el tiempo de espera antes de que se produzca un error
-        busyTimeout: 60000, // 60 segundos
-    },
 });
 
 // Definimos una lista de modelos que queremos incluir en la base de datos.
@@ -28,6 +24,7 @@ const modelDefiners = [
 	require('./models/dia.model'),  // Importa el modelo 'dia'.
 	require('./models/horario.model'),  // Importa el modelo 'horario'.
 	require('./models/horarios_laborales.model'),  // Importa el modelo 'horario'.
+	require('./models/dias_laborales.model'),  // Importa el modelo 'dias_laborales'.
 	require('./models/reserva.model'),  // Importa el modelo 'reserva'.
 	require('./models/servicio.model'),  // Importa el modelo 'servicio'.
 	// Puedes añadir más modelos aquí según los archivos disponibles en la carpeta 'models'.

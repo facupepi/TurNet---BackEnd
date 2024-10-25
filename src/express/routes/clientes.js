@@ -26,13 +26,33 @@ async function getById(req, res) {
 // Función para crear un nuevo registro en la base de datos.
 // Valida que el cuerpo de la solicitud no incluya un ID, ya que este se genera automáticamente.
 async function create(req, res) {
-	if (req.body.id) {
-		res.status(400).send(`Bad request: ID should not be provided, since it is determined automatically by the database.`);
-	} else {
-		await models.cliente.create(req.body);  // Cambia 'cliente' por la entidad deseada.
-		res.status(201).end();  // Devuelve un estado 201 (creado) y finaliza la respuesta.
-	}
-};
+    const { nombre, email, telefono, contrasena } = req.body;
+
+    try {
+        // Verificar que no exista un cliente con el mismo email
+        const clienteExistente = await models.cliente.findOne({
+            where: { email }
+        });
+
+        if (clienteExistente) {
+            return res.status(409).json({ message: 'El email ya está registrado.' });
+        }
+
+        // Crear el nuevo cliente
+        const nuevoCliente = await models.cliente.create({
+            nombre,
+            email,
+            telefono,
+            contrasena
+        });
+
+        return res.status(201).json({ message: 'Cliente creado exitosamente', cliente: nuevoCliente });
+    } catch (error) {
+        console.error('Error al crear cliente:', error);
+        return res.status(500).json({ message: 'Error al crear cliente' });
+    }
+}
+
 
 // Función para actualizar un registro existente.
 // Acepta la actualización solo si el ID del parámetro de la URL coincide con el ID del cuerpo de la solicitud.
