@@ -40,8 +40,7 @@ async function getById(req, res) {
     } else {
         res.status(404).send('404 - Not found');
     }
-};
-async function create(req, res) {
+};async function create(req, res) {
     // Extraemos los días y el id_servicio del cuerpo de la solicitud
     const { dias, id_servicio } = req.body;
 
@@ -67,39 +66,22 @@ async function create(req, res) {
             return res.status(404).json({ message: 'Servicio no encontrado.' });
         }
 
-        // Obtenemos los IDs y nombres de los días seleccionados desde la base de datos
-        const diasValidos = await models.dia.findAll({
-            where: {
-                nombre: dias // Filtramos por los nombres de los días seleccionados
-            }
-        });
-
-        // Verificamos si se encontraron los días válidos en la base de datos
-        if (diasValidos.length === 0) {
-            return res.status(404).json({ message: 'No se encontraron días válidos.' });
-        }
-
-        // Creamos los registros de días laborales usando los IDs y nombres de los días obtenidos
-        const registros = diasValidos.map(dia => ({
+        // Preparamos los registros de días laborales con el nombre del día
+        const registros = dias.map(dia => ({
             id_servicio: id_servicio, // Asignamos el id_servicio
-            id_dia: dia.id, // Usamos el ID del día de la base de datos
-            nombre_dia: dia.nombre // Incluimos el nombre del día
+            name: dia // Usamos el nombre del día directamente
         }));
 
         // Usamos bulkCreate para insertar múltiples registros de días laborales en la base de datos
         const diasLaboralesCreados = await models.dias_laborales.bulkCreate(registros, { returning: true });
 
-        // Formateamos la respuesta incluyendo el nombre de los días laborales creados
-        const respuesta = diasLaboralesCreados.map(diaLaboral => ({
-            id_servicio: diaLaboral.id_servicio,
-            id_dia: diaLaboral.id_dia,
-            nombre_dia: diasValidos.find(dia => dia.id === diaLaboral.id_dia).nombre
-        }));
-
         // Respondemos con los días laborales recién creados
         return res.status(201).json({
             message: 'Días laborales creados exitosamente',
-            diasLaborales: respuesta
+            diasLaborales: diasLaboralesCreados.map(diaLaboral => ({
+                id_servicio: diaLaboral.id_servicio,
+                name: diaLaboral.name
+            }))
         });
 
     } catch (error) {

@@ -1,4 +1,4 @@
-const {DataTypes} = require('sequelize');
+const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
     return sequelize.define('dias_laborales', {
@@ -11,14 +11,9 @@ module.exports = (sequelize) => {
             },
             onDelete: 'CASCADE' // Eliminación en cascada si el servicio se elimina
         },
-        id_dia: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'dia', // Nombre de la tabla de días
-                key: 'id'
-            },
-            onDelete: 'CASCADE' // Eliminación en cascada si el día se elimina
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false, // Asegura que el nombre del día esté siempre presente
         }
     }, {
         tableName: 'dias_laborales', // Nombre de la tabla en la base de datos

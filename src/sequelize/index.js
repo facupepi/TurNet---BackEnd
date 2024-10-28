@@ -21,7 +21,7 @@ const sequelize = new Sequelize({
 const modelDefiners = [
 	require('./models/admin.model'),  // Importa el modelo 'admin'.
 	require('./models/cliente.model'),  // Importa el modelo 'cliente'.
-	require('./models/dia.model'),  // Importa el modelo 'dia'.
+	//require('./models/dia.model'),  // Importa el modelo 'dia'.
 	require('./models/horario.model'),  // Importa el modelo 'horario'.
 	require('./models/horarios_laborales.model'),  // Importa el modelo 'horario'.
 	require('./models/dias_laborales.model'),  // Importa el modelo 'dias_laborales'.

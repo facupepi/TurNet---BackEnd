@@ -10,7 +10,6 @@ const routes = {
     servicios: require('./routes/servicios'),  // Ruta para gestionar 'servicios'.
     reservas: require('./routes/reservas'),  // Ruta para gestionar 'servicios'
     horarios: require('./routes/horarios'),  // Ruta para gestionar 'horarios'
-    dias: require('./routes/dias'),  // Ruta para gestionar 'dias'
     horarios_laborales: require('./routes/horarios_laborales'),  // Ruta para gestionar 'horarios_laborales',
     dias_laborales: require('./routes/dias_laborales'),  // Ruta para gestionar 'dias_laborales',
 };

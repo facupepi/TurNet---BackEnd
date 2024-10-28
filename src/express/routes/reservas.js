@@ -105,11 +105,7 @@ async function create(req, res) {
         const diaLaboral = await models.dias_laborales.findOne({
             where: {
                 id_servicio,
-            },
-            include: [{
-                model: models.dia,
-                where: { nombre: nombreDia } // Verificamos el día por su nombre
-            }]
+            }
         });
 
         if (!diaLaboral) {

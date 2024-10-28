@@ -4,7 +4,6 @@ function applyExtraSetup(sequelize) {
         cliente,
         reserva,
         servicio,
-        dia,
         horario,
         horarios_laborales,
         dias_laborales
@@ -24,21 +23,6 @@ function applyExtraSetup(sequelize) {
     });
     reserva.belongsTo(servicio, {foreignKey: 'id_servicio'});
 
-    // Relación muchos a muchos entre 'Día' y 'Servicio' a través de
-    // 'dias_laborales'.
-    servicio.belongsToMany(dia, {
-        through: 'dias_laborales', // Nombre de la tabla intermedia.
-        foreignKey: 'id_servicio',
-        otherKey: 'id_dia',
-        onDelete: 'CASCADE'
-    });
-    dia.belongsToMany(servicio, {
-        through: 'dias_laborales', // Nombre de la tabla intermedia.
-        foreignKey: 'id_dia',
-        otherKey: 'id_servicio',
-        onDelete: 'CASCADE'
-    });
-
     // Relación muchos a muchos entre 'Horario' y 'Servicio' a través de
     // 'horarios_laborales'.
     servicio.belongsToMany(horario, {
@@ -57,23 +41,7 @@ function applyExtraSetup(sequelize) {
     horarios_laborales.belongsTo(servicio, {foreignKey: 'id_servicio'});
     horarios_laborales.belongsTo(horario, {foreignKey: 'id_horario'});
 
-        // Relación muchos a muchos entre 'Servicio' y 'Día' a través de 'dias_laborales'.
-        servicio.belongsToMany(dia, {
-            through: 'dias_laborales', // Usa el modelo 'dias_laborales'
-            foreignKey: 'id_servicio',
-            otherKey: 'id_dia',
-            onDelete: 'CASCADE'
-        });
-        
-        dia.belongsToMany(servicio, {
-            through: 'dias_laborales', // Usa el modelo 'dias_laborales'
-            foreignKey: 'id_dia',
-            otherKey: 'id_servicio',
-            onDelete: 'CASCADE'
-        });
-    // Relación entre 'dias_laborales' y 'servicio' y 'dia'
     dias_laborales.belongsTo(servicio, { foreignKey: 'id_servicio' });
-    dias_laborales.belongsTo(dia, { foreignKey: 'id_dia' });
     
 }
 
