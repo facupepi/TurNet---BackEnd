@@ -5,13 +5,13 @@ const bodyParser = require('body-parser');  // Permite analizar el cuerpo de las
 // Definimos las rutas que gestionarán diferentes partes de la aplicación.
 // Cada propiedad de 'routes' corresponde a un conjunto de rutas que se gestionan en archivos separados.
 const routes = {
-    clientes: require('./routes/clientes'),  // Ruta para gestionar 'clientes'.
+    clients: require('./routes/clients'),  // Ruta para gestionar 'clientes'.
     admins: require('./routes/admins'),  // Ruta para gestionar 'admins'.
-    servicios: require('./routes/servicios'),  // Ruta para gestionar 'servicios'.
-    reservas: require('./routes/reservas'),  // Ruta para gestionar 'servicios'
-    horarios: require('./routes/horarios'),  // Ruta para gestionar 'horarios'
-    horarios_laborales: require('./routes/horarios_laborales'),  // Ruta para gestionar 'horarios_laborales',
-    dias_laborales: require('./routes/dias_laborales'),  // Ruta para gestionar 'dias_laborales',
+    services: require('./routes/services'),  // Ruta para gestionar 'servicios'.
+    bookings: require('./routes/bookings'),  // Ruta para gestionar 'servicios'
+    schedules: require('./routes/schedules'),  // Ruta para gestionar 'horarios'
+    work_schedules: require('./routes/work_schedules'),  // Ruta para gestionar 'horarios_laborales',
+    work_days: require('./routes/work_days'),  // Ruta para gestionar 'dias_laborales',
 };
 
 // Inicializamos una instancia de la aplicación Express.
@@ -81,8 +81,10 @@ for (const [routeName, routeController] of Object.entries(routes)) {
 }
 
 // Definimos rutas adicionales específicas que no siguen el patrón REST.
-app.get('/servicios/:id_servicio/horarios_laborales', makeHandlerAwareOfAsyncErrors(routes.horarios_laborales.getHorariosByServicio));
-app.get('/reservas/service/:id_servicio/date/:fecha/', makeHandlerAwareOfAsyncErrors(routes.reservas.getReservasByServiceByDay));
+app.get('/services/:id_service/schedules', makeHandlerAwareOfAsyncErrors(routes.work_schedules.getWorkSchedulesByService));
+
+app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.services.getServiceBookingsByDay));
+
 
 // Exportamos la aplicación para poder ser utilizada en otro lugar (como en 'index.js' o para pruebas).
 module.exports = app;

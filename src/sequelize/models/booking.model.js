@@ -1,38 +1,37 @@
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {
-    // Definimos el modelo 'Reserva'
-    sequelize.define('reserva', {
+    const Booking = sequelize.define('booking', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true
         },
-        id_cliente: {
+        client_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'cliente', // Hace referencia al modelo Cliente
+                model: 'client',
                 key: 'id'
             }
         },
-        id_servicio: {
+        service_id: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'servicio', // Hace referencia al modelo Servicio
+                model: 'service',
                 key: 'id'
             }
         },
-        fecha: {
+        date: {
             type: DataTypes.DATEONLY,
             allowNull: false
         },
-        hora: {
+        time: {
             type: DataTypes.TIME,
             allowNull: false
         }
-    }, {
-        tableName: 'reserva', // Nombre de la tabla en la base de datos
-      });
+    }, {tableName: 'booking'});
+
+    return Booking;
 };

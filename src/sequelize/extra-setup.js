@@ -1,48 +1,47 @@
 function applyExtraSetup(sequelize) {
-    // Desestructuramos los modelos de la instancia de Sequelize.
     const {
-        cliente,
-        reserva,
-        servicio,
-        horario,
-        horarios_laborales,
-        dias_laborales
+        client,
+        booking,
+        service,
+        schedule,
+        work_schedules,
+        work_days
     } = sequelize.models;
 
-    // Relación entre 'Reserva' y 'Cliente' (uno a muchos).
-    cliente.hasMany(reserva, {
-        foreignKey: 'id_cliente',
-        onDelete: 'CASCADE' // Si se elimina un cliente, también se eliminan sus reservas.
+    // Relación uno a muchos entre 'Reserva' y 'Cliente'.
+    client.hasMany(booking, {
+        foreignKey: 'client_id', // id_cliente -> id_client
+        onDelete: 'CASCADE' // Si se elimina un cliente, sus reservas también se eliminan.
     });
-    reserva.belongsTo(cliente, {foreignKey: 'id_cliente'});
+    booking.belongsTo(client, {foreignKey: 'client_id'});
 
-    // Relación entre 'Reserva' y 'Servicio' (uno a muchos).
-    servicio.hasMany(reserva, {
-        foreignKey: 'id_servicio',
+    // Relación uno a muchos entre 'Reserva' y 'Servicio'.
+    service.hasMany(booking, {
+        foreignKey: 'service_id', // id_servicio -> id_service
         onDelete: 'CASCADE'
     });
-    reserva.belongsTo(servicio, {foreignKey: 'id_servicio'});
+    booking.belongsTo(service, {foreignKey: 'service_id'});
 
-    // Relación muchos a muchos entre 'Horario' y 'Servicio' a través de
-    // 'horarios_laborales'.
-    servicio.belongsToMany(horario, {
-        through: 'horarios_laborales', // Nombre del modelo intermedio.
-        foreignKey: 'id_servicio',
-        otherKey: 'id_horario',
+    // Relación muchos a muchos entre 'Horario' y 'Servicio' a través de 'work_schedules'.
+    service.belongsToMany(schedule, {
+        through: 'work_schedules',
+        foreignKey: 'service_id',
+        otherKey: 'schedule_id',
         onDelete: 'CASCADE'
     });
-    horario.belongsToMany(servicio, {
-        through: 'horarios_laborales', // Nombre del modelo intermedio.
-        foreignKey: 'id_horario',
-        otherKey: 'id_servicio',
+    schedule.belongsToMany(service, {
+        through: 'work_schedules',
+        foreignKey: 'schedule_id',
+        otherKey: 'service_id',
         onDelete: 'CASCADE'
     });
 
-    horarios_laborales.belongsTo(servicio, {foreignKey: 'id_servicio'});
-    horarios_laborales.belongsTo(horario, {foreignKey: 'id_horario'});
+    // Configuración de relaciones adicionales en 'work_schedules'.
+    work_schedules.belongsTo(service, {foreignKey: 'service_id'});
+    work_schedules.belongsTo(schedule, {foreignKey: 'schedule_id'});
 
-    dias_laborales.belongsTo(servicio, { foreignKey: 'id_servicio' });
-    
+    // Relación entre 'Días Laborales' y 'Servicio'.
+    work_days.belongsTo(service, {foreignKey: 'service_id'});
 }
 
 module.exports = {

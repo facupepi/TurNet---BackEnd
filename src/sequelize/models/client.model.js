@@ -1,14 +1,13 @@
-const { DataTypes } = require('sequelize');
+const {DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    // Definimos el modelo 'Cliente'
-    sequelize.define('cliente', {
+    sequelize.define('client', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true
         },
-        nombre: {
+        name: {
             type: DataTypes.STRING,
             allowNull: false
         },
@@ -17,15 +16,16 @@ module.exports = (sequelize) => {
             allowNull: false,
             unique: true
         },
-        telefono: {
+        phone: {
             type: DataTypes.STRING,
             allowNull: true
         },
-        contrasena: {
+        password: {
             type: DataTypes.STRING,
             allowNull: false
-        },
+        }
     }, {
-        tableName: 'cliente', // Nombre de la tabla en la base de datos
-      });
+            tableName: 'client',
+        }
+    );
 };
