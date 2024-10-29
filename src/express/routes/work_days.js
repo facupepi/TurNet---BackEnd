@@ -27,82 +27,90 @@ async function getDiasByServicio(req, res) {
 
 // Función para obtener todos los registros de la entidad días laborales.
 async function getAll(req, res) {
-    const entities = await models.dias_laborales.findAll();
-    res.status(200).json(entities);
+    try {
+        const entities = await models.work_days.findAll();
+        res.status(200).json(entities);
+    } catch (error) {
+        console.error('Error al obtener todos los días laborales:', error);
+        res.status(500).json({ message: 'Error al obtener todos los días laborales' });
+    }
 };
 
 // Función para obtener un registro específico de días laborales por su ID.
 async function getById(req, res) {
     const id = getIdParam(req);
-    const entity = await models.dias_laborales.findByPk(id);
-    if (entity) {
-        res.status(200).json(entity);
-    } else {
-        res.status(404).send('404 - Not found');
+    try {
+        const entity = await models.dias_laborales.findByPk(id);
+        if (entity) {
+            res.status(200).json(entity);
+        } else {
+            res.status(404).send('404 - Not found');
+        }
+    } catch (error) {
+        console.error('Error al obtener día laboral por ID:', error);
+        res.status(500).json({ message: 'Error al obtener día laboral por ID' });
     }
-};async function create(req, res) {
-    // Extraemos los días y el id_servicio del cuerpo de la solicitud
-    const { dias, id_servicio } = req.body;
+};
+
+// Función para crear nuevos registros de días laborales.
+async function create(req, res) {
+    const { id_service, days  } = req.body;
 
     try {
-        // Definimos los días válidos de la semana
-        const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
-        // Validamos que el array de días no esté vacío
-        if (!dias || dias.length === 0) {
+        if (!days || days.length === 0) {
             return res.status(400).json({ message: 'Debe proporcionar al menos un día laboral.' });
         }
 
-        // Validamos que todos los días proporcionados en el array sean válidos
-        const diasInvalidos = dias.filter(dia => !diasSemana.includes(dia));
-        if (diasInvalidos.length > 0) {
-            return res.status(400).json({ message: `Los siguientes días son inválidos: ${diasInvalidos.join(', ')}` });
+        const invalidDays = days.filter(day => !weekDays.includes(day));
+        if (invalidDays.length > 0) {
+            return res.status(400).json({ message: `Los siguientes días son inválidos: ${invalidDays.join(', ')}` });
         }
 
-        // Verificamos que el servicio exista en la base de datos
-        const servicio = await models.servicio.findByPk(id_servicio);
-
-        if (!servicio) {
+        const service_temp = await models.service.findByPk(id_service);
+        if (!service_temp) {
             return res.status(404).json({ message: 'Servicio no encontrado.' });
         }
 
-        // Preparamos los registros de días laborales con el nombre del día
-        const registros = dias.map(dia => ({
-            id_servicio: id_servicio, // Asignamos el id_servicio
-            name: dia // Usamos el nombre del día directamente
+        console.log('\n\n\n service_temp:', service_temp);
+        console.log('Datos del servicio:', JSON.stringify(service_temp, null, 2));
+
+        const workDays = days.map(day => ({
+            service_id: service_temp.id,
+            name: day
         }));
 
-        // Usamos bulkCreate para insertar múltiples registros de días laborales en la base de datos
-        const diasLaboralesCreados = await models.dias_laborales.bulkCreate(registros, { returning: true });
+        const newworkDays = await models.work_days.bulkCreate(workDays, { returning: true });
 
-        // Respondemos con los días laborales recién creados
         return res.status(201).json({
             message: 'Días laborales creados exitosamente',
-            diasLaborales: diasLaboralesCreados.map(diaLaboral => ({
-                id_servicio: diaLaboral.id_servicio,
-                name: diaLaboral.name
+            workDays: newworkDays.map(newworkDay => ({
+                service_id: newworkDay.id_servicio,
+                name: newworkDay.name
             }))
         });
-
     } catch (error) {
-        // Manejamos cualquier error que pueda ocurrir durante el proceso
         console.error('Error al crear días laborales:', error);
         return res.status(500).json({ message: 'Error al crear días laborales' });
     }
-}
-
-
+};
 
 // Función para actualizar un registro existente de días laborales.
 async function update(req, res) {
     const id = getIdParam(req);
     if (req.body.id === id) {
-        await models.dias_laborales.update(req.body, {
-            where: {
-                id: id
-            }
-        });
-        res.status(200).end();
+        try {
+            await models.dias_laborales.update(req.body, {
+                where: {
+                    id: id
+                }
+            });
+            res.status(200).end();
+        } catch (error) {
+            console.error('Error al actualizar día laboral:', error);
+            res.status(500).json({ message: 'Error al actualizar día laboral' });
+        }
     } else {
         res.status(400).send(`Bad request: param ID (${id}) does not match body ID (${req.body.id}).`);
     }
@@ -111,12 +119,17 @@ async function update(req, res) {
 // Función para eliminar un registro de días laborales por su ID.
 async function remove(req, res) {
     const id = getIdParam(req);
-    await models.dias_laborales.destroy({
-        where: {
-            id: id
-        }
-    });
-    res.status(200).end();
+    try {
+        await models.dias_laborales.destroy({
+            where: {
+                id: id
+            }
+        });
+        res.status(200).end();
+    } catch (error) {
+        console.error('Error al eliminar día laboral:', error);
+        res.status(500).json({ message: 'Error al eliminar día laboral' });
+    }
 };
 
 // Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).

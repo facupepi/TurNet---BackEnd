@@ -7,7 +7,7 @@ const { getIdParam } = require('../helpers');
 // Función para obtener todos los registros de la entidad.
 // Realiza una consulta a la base de datos y devuelve los resultados en formato JSON.
 async function getAll(req, res) {
-	const entities = await models.horario.findAll();  // Cambia 'horario' por la entidad deseada.
+	const entities = await models.schedule.findAll();  // Cambia 'schedule' por la entidad deseada.
 	res.status(200).json(entities);  // Devuelve un estado 200 (éxito) junto con los datos.
 };
 
@@ -15,11 +15,11 @@ async function getAll(req, res) {
 // Valida el ID, busca el registro en la base de datos y lo devuelve en formato JSON.
 async function getById(req, res) {
 	const id = getIdParam(req);  // Valida y convierte el ID a número.
-	const entity = await models.horario.findByPk(id);  // Cambia 'horario' por la entidad deseada.
+	const entity = await models.schedule.findByPk(id);  // Cambia 'schedule' por la entidad deseada.
 	if (entity) {
 		res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
 	} else {
-		res.status(404).send('404 - Not found');  // Si no se encuentra, devuelve un error 404.
+		res.status(404).send('404 - No encontrado');  // Si no se encuentra, devuelve un error 404.
 	}
 };
 
@@ -27,9 +27,9 @@ async function getById(req, res) {
 // Valida que el cuerpo de la solicitud no incluya un ID, ya que este se genera automáticamente.
 async function create(req, res) {
 	if (req.body.id) {
-		res.status(400).send(`Bad request: ID should not be provided, since it is determined automatically by the database.`);
+		res.status(400).send(`Solicitud incorrecta: el ID no debe ser proporcionado, ya que es determinado automáticamente por la base de datos.`);
 	} else {
-		await models.horario.create(req.body);  // Cambia 'horario' por la entidad deseada.
+		await models.schedule.create(req.body);  
 		res.status(201).end();  // Devuelve un estado 201 (creado) y finaliza la respuesta.
 	}
 };
@@ -41,14 +41,14 @@ async function update(req, res) {
 
 	// Solo se permite la actualización si el ID del cuerpo coincide con el ID de la URL.
 	if (req.body.id === id) {
-		await models.horario.update(req.body, {  // Cambia 'horario' por la entidad deseada.
+		await models.schedule.update(req.body, {  // Cambia 'schedule' por la entidad deseada.
 			where: {
 				id: id  // Filtra la actualización por el ID proporcionado.
 			}
 		});
 		res.status(200).end();  // Devuelve un estado 200 (éxito) y finaliza la respuesta.
 	} else {
-		res.status(400).send(`Bad request: param ID (${id}) does not match body ID (${req.body.id}).`);
+		res.status(400).send(`Solicitud incorrecta: el ID del parámetro (${id}) no coincide con el ID del cuerpo (${req.body.id}).`);
 	}
 };
 
@@ -56,7 +56,7 @@ async function update(req, res) {
 // Busca el registro por el ID en la URL y lo elimina si existe.
 async function remove(req, res) {
 	const id = getIdParam(req);  // Valida y obtiene el ID del parámetro de la URL.
-	await models.horario.destroy({  // Cambia 'horario' por la entidad deseada.
+	await models.schedule.destroy({ 
 		where: {
 			id: id  // Filtra la eliminación por el ID proporcionado.
 		}

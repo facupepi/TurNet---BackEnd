@@ -1,7 +1,8 @@
 const {DataTypes} = require('sequelize');
 
 module.exports = (sequelize) => {
-    sequelize.define('admin', {
+
+    sequelize.define('service', {
         id: {
             type: DataTypes.INTEGER,
             primaryKey: true,
@@ -11,16 +12,17 @@ module.exports = (sequelize) => {
             type: DataTypes.STRING,
             allowNull: false
         },
-        email: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            unique: true
+        duration: {
+            type: DataTypes.INTEGER,
+            allowNull: false
         },
-        password: { 
+        price: { // precio -> price
+            type: DataTypes.FLOAT,
+            allowNull: false
+        },
+        reservation_period: {
             type: DataTypes.STRING,
             allowNull: false
         }
-    }, {
-        tableName: 'admin', 
-    });
+    }, {tableName: 'service'});
 };

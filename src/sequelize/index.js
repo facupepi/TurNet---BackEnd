@@ -20,16 +20,15 @@ const sequelize = new Sequelize({
 // Cada archivo en './models' representa un modelo diferente (como categoría, ítem, orden, etc.).
 const modelDefiners = [
 	require('./models/admin.model'),  // Importa el modelo 'admin'.
-	require('./models/cliente.model'),  // Importa el modelo 'cliente'.
-	//require('./models/dia.model'),  // Importa el modelo 'dia'.
-	require('./models/horario.model'),  // Importa el modelo 'horario'.
-	require('./models/horarios_laborales.model'),  // Importa el modelo 'horario'.
-	require('./models/dias_laborales.model'),  // Importa el modelo 'dias_laborales'.
-	require('./models/reserva.model'),  // Importa el modelo 'reserva'.
-	require('./models/servicio.model'),  // Importa el modelo 'servicio'.
-	// Puedes añadir más modelos aquí según los archivos disponibles en la carpeta 'models'.
-	// require('./models/otroModelo'),
+	require('./models/client.model'),  // Importa el modelo 'client'.
+	//require('./models/day.model'),  // Importa el modelo 'day'.
+	require('./models/schedule.model'),  // Importa el modelo 'schedule'.
+	require('./models/work_schedules.model'),  // Importa el modelo 'work_schedules'.
+	require('./models/work_days.model'),  // Importa el modelo 'work_days'.
+	require('./models/booking.model'),  // Importa el modelo 'booking'.
+	require('./models/service.model'),  // Importa el modelo 'service'.
 ];
+
 
 // Definimos todos los modelos de acuerdo con los archivos que hemos importado.
 // Esta parte itera sobre cada modelo y lo inicializa dentro de Sequelize.

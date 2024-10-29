@@ -19,7 +19,7 @@ async function getById(req, res) {
 	if (entity) {
 		res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
 	} else {
-		res.status(404).send('404 - Not found');  // Si no se encuentra, devuelve un error 404.
+		res.status(404).send('404 - No encontrado');  // Si no se encuentra, devuelve un error 404.
 	}
 };
 
@@ -27,7 +27,7 @@ async function getById(req, res) {
 // Valida que el cuerpo de la solicitud no incluya un ID, ya que este se genera automáticamente.
 async function create(req, res) {
 	if (req.body.id) {
-		res.status(400).send(`Bad request: ID should not be provided, since it is determined automatically by the database.`);
+		res.status(400).send('Solicitud incorrecta: no se debe proporcionar el ID, ya que se determina automáticamente por la base de datos.');
 	} else {
 		await models.admin.create(req.body);  // Cambia 'admin' por la entidad deseada.
 		res.status(201).end();  // Devuelve un estado 201 (creado) y finaliza la respuesta.
@@ -48,7 +48,7 @@ async function update(req, res) {
 		});
 		res.status(200).end();  // Devuelve un estado 200 (éxito) y finaliza la respuesta.
 	} else {
-		res.status(400).send(`Bad request: param ID (${id}) does not match body ID (${req.body.id}).`);
+		res.status(400).send(`Solicitud incorrecta: el ID del parámetro (${id}) no coincide con el ID del cuerpo (${req.body.id}).`);
 	}
 };
 
