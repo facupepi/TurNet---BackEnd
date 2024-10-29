@@ -67,11 +67,6 @@ async function getReservasByServiceByDay(req, res) {
 }
 
 
-
-
-
-// Función para crear un nuevo registro en la base de datos.
-// Valida que el cuerpo de la solicitud no incluya un ID, ya que este se genera automáticamente.
 async function create(req, res) {
     const { id_cliente, id_servicio, fecha, hora } = req.body;
 
@@ -81,46 +76,52 @@ async function create(req, res) {
             return res.status(400).json({ message: 'Faltan parámetros obligatorios: id_cliente, id_servicio, fecha, hora.' });
         }
 
-        // Verificamos que el cliente exista
+        // Verificamos que el cliente y servicio existan
         const cliente = await models.cliente.findByPk(id_cliente);
-        if (!cliente) {
-            return res.status(404).json({ message: 'Cliente no encontrado.' });
-        }
+        if (!cliente) return res.status(404).json({ message: 'Cliente no encontrado.' });
 
-        // Verificamos que el servicio exista
         const servicio = await models.servicio.findByPk(id_servicio);
-        if (!servicio) {
-            return res.status(404).json({ message: 'Servicio no encontrado.' });
+        if (!servicio) return res.status(404).json({ message: 'Servicio no encontrado.' });
+
+        // Obtener la fecha y hora actuales
+        const now = new Date();
+        
+        // Convertimos la fecha y hora solicitadas a un objeto Date completo
+        const requestDateTime = new Date(`${fecha}T${hora}Z`);
+        requestDateTime.setUTCHours(requestDateTime.getUTCHours() + 3);
+        
+
+        console.log('\n\n\nFecha y hora de la solicitud:', requestDateTime);
+
+        console.log('\n\n\nFecha y hora actuales:', now);
+
+        // Validar que la fecha y hora de la solicitud no sean en el pasado
+        if (requestDateTime < now) {
+            return res.status(400).json({ message: 'La fecha y hora de la reserva no pueden ser anteriores a la fecha y hora actuales.' });
         }
 
-        // Asegurarse de convertir la fecha correctamente al trabajar en UTC
-        const fechaObj = new Date(`${fecha}T00:00:00Z`); // Convertimos la fecha al formato UTC
-        const diaSemana = fechaObj.getUTCDay(); // Usamos getUTCDay para obtener el día de la semana en UTC
+        // Convertir la fecha de la solicitud a un día de la semana
+        const requestDate = new Date(`${fecha}T00:00:00Z`);
+        const diaSemana = requestDate.getUTCDay();
         const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
         const nombreDia = diasSemana[diaSemana];
 
-        console.log(`Fecha: ${fecha}, Día de la semana (UTC): ${nombreDia}`);
-
-        // Verificar que el servicio maneje ese día laboral
+        // Verificación del día laboral
         const diaLaboral = await models.dias_laborales.findOne({
-            where: {
-                id_servicio,
-            }
+            where: { id_servicio, name: nombreDia }
         });
 
         if (!diaLaboral) {
             return res.status(400).json({ message: `El servicio no está disponible el día ${nombreDia}.` });
         }
 
-        // Verificar que el servicio maneje ese horario laboral
+        // Verificación del horario laboral
         const horarioLaboral = await models.horarios_laborales.findOne({
-            where: {
-                id_servicio,
-                '$horario.hora$': hora
-            },
+            where: { id_servicio },
             include: [{
                 model: models.horario,
-                as: 'horario'
+                as: 'horario',
+                where: { hora } // Esto debería coincidir si el formato de hora es idéntico
             }]
         });
 
@@ -128,35 +129,33 @@ async function create(req, res) {
             return res.status(400).json({ message: `El servicio no está disponible a las ${hora}.` });
         }
 
-        // Verificamos que no haya una reserva existente para la misma fecha y hora
+        // Verificación de reservas duplicadas
         const reservaExistente = await models.reserva.findOne({
-            where: {
-                id_servicio,
-                fecha,
-                hora
-            }
+            where: { id_servicio, fecha, hora }
         });
 
         if (reservaExistente) {
             return res.status(409).json({ message: 'Ya existe una reserva para este servicio, fecha y hora.' });
         }
 
-        // Creamos la reserva si no hay conflictos
+        // Crear la reserva si no hay conflictos
         const nuevaReserva = await models.reserva.create({
-            id_cliente,
-            id_servicio,
-            fecha,
-            hora
+            id_cliente, id_servicio, fecha, hora
         });
 
-        // Devolvemos una respuesta exitosa
         return res.status(201).json({ message: 'Reserva creada exitosamente', reserva: nuevaReserva });
+
     } catch (error) {
-        // Manejo de errores
         console.error('Error al crear reserva:', error);
         return res.status(500).json({ message: 'Error al crear la reserva' });
     }
 }
+
+
+
+
+
+
 
 // Función para actualizar un registro existente.
 // Acepta la actualización solo si el ID del parámetro de la URL coincide con el ID del cuerpo de la solicitud.
