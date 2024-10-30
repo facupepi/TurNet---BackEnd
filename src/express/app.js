@@ -9,9 +9,6 @@ const routes = {
     admins: require('./routes/admins'),  // Ruta para gestionar 'admins'.
     services: require('./routes/services'),  // Ruta para gestionar 'servicios'.
     bookings: require('./routes/bookings'),  // Ruta para gestionar 'servicios'
-    schedules: require('./routes/schedules'),  // Ruta para gestionar 'horarios'
-    work_schedules: require('./routes/work_schedules'),  // Ruta para gestionar 'horarios_laborales',
-    work_days: require('./routes/work_days'),  // Ruta para gestionar 'dias_laborales',
 };
 
 // Inicializamos una instancia de la aplicación Express.
@@ -81,7 +78,6 @@ for (const [routeName, routeController] of Object.entries(routes)) {
 }
 
 // Definimos rutas adicionales específicas que no siguen el patrón REST.
-//app.get('/services/:id_service/schedules', makeHandlerAwareOfAsyncErrors(routes.work_schedules.getWorkSchedulesByService));
 
 app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.services.getServiceBookingsByDay));
 

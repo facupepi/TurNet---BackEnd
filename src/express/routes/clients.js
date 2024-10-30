@@ -85,7 +85,9 @@ async function update(req, res) {
 			where: { id }
 		});
 
-		return res.status(200).json({ message: 'Cliente actualizado exitosamente', cliente: client });
+		const clientUpdated = await models.client.findByPk(id);
+
+		return res.status(200).json({ message: 'Cliente actualizado exitosamente', cliente: clientUpdated });
 	}
 	// Solo se permite la actualización si el ID del cuerpo coincide con el ID de la URL.
 	catch (error) {
