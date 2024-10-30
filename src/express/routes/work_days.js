@@ -6,27 +6,28 @@ const { getIdParam } = require('../helpers');
 
 // Función para obtener todos los registros de días laborales filtrando por ID de servicio.
 async function getDiasByServicio(req, res) {
+    return res.status(400).json({ message: 'No se puede obtener días laborales por servicio.' });
+    /*
     const { id_servicio } = req.params;  // Obtiene el ID del servicio de los parámetros de la solicitud.
     try {
-        const diasLaborales = await models.dias_laborales.findAll({
+        const workDays = await models.work_days.findAll({
             where: {
-                id_servicio: id_servicio,  // Filtra los registros por ID de servicio.
-            },
-            include: [{
-                model: models.dia,   // Incluye la entidad 'dia'.
-                attributes: ['nombre']     // Especifica que solo quieres obtener el campo 'nombre'.
-            }]
+                service_id: id_servicio,  // Filtra los registros por ID de servicio.
+            }
         });
 
-        res.status(200).json(diasLaborales);  // Devuelve los días laborales encontrados con los campos 'nombre'.
+        res.status(200).json(workDays);  // Devuelve los días laborales encontrados con los campos 'nombre'.
     } catch (error) {
         console.error('Error al obtener días laborales:', error);
         res.status(500).json({ message: 'Error al obtener días laborales' });
     }
+    */
 };
 
 // Función para obtener todos los registros de la entidad días laborales.
 async function getAll(req, res) {
+    return res.status(400).json({ message: 'No se puede obtener días laborales.' });
+    /*
     try {
         const entities = await models.work_days.findAll();
         res.status(200).json(entities);
@@ -34,10 +35,14 @@ async function getAll(req, res) {
         console.error('Error al obtener todos los días laborales:', error);
         res.status(500).json({ message: 'Error al obtener todos los días laborales' });
     }
+    */
 };
 
 // Función para obtener un registro específico de días laborales por su ID.
 async function getById(req, res) {
+    return res.status(400).json({ message: 'No se puede obtener un día laboral por ID.' });
+
+    /*
     const id = getIdParam(req);
     try {
         const entity = await models.dias_laborales.findByPk(id);
@@ -50,10 +55,13 @@ async function getById(req, res) {
         console.error('Error al obtener día laboral por ID:', error);
         res.status(500).json({ message: 'Error al obtener día laboral por ID' });
     }
+    */
 };
 
 // Función para crear nuevos registros de días laborales.
 async function create(req, res) {
+    return res.status(400).json({ message: 'No se puede crear días laborales.' });
+    /*
     const { id_service, days  } = req.body;
 
     try {
@@ -94,10 +102,15 @@ async function create(req, res) {
         console.error('Error al crear días laborales:', error);
         return res.status(500).json({ message: 'Error al crear días laborales' });
     }
+    */
 };
+
+
 
 // Función para actualizar un registro existente de días laborales.
 async function update(req, res) {
+    return res.status(400).json({ message: 'No se puede actualizar días laborales.' });
+    /*
     const id = getIdParam(req);
     if (req.body.id === id) {
         try {
@@ -114,10 +127,13 @@ async function update(req, res) {
     } else {
         res.status(400).send(`Bad request: param ID (${id}) does not match body ID (${req.body.id}).`);
     }
+    */
 };
 
 // Función para eliminar un registro de días laborales por su ID.
 async function remove(req, res) {
+    return res.status(400).json({ message: 'No se puede eliminar días laborales.' });
+    /*
     const id = getIdParam(req);
     try {
         await models.dias_laborales.destroy({
@@ -130,6 +146,7 @@ async function remove(req, res) {
         console.error('Error al eliminar día laboral:', error);
         res.status(500).json({ message: 'Error al eliminar día laboral' });
     }
+    */
 };
 
 // Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).

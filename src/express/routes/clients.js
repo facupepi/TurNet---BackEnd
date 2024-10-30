@@ -56,24 +56,49 @@ async function create(req, res) {
 // Función para actualizar un registro existente.
 // Acepta la actualización solo si el ID del parámetro de la URL coincide con el ID del cuerpo de la solicitud.
 async function update(req, res) {
-	const id = getIdParam(req);  // Valida y obtiene el ID del parámetro de la URL.
+	const {name, email, phone, password} = req.body;
+	const {id} = req.params;  // Valida y obtiene el ID del parámetro de la URL.
 
-	// Solo se permite la actualización si el ID del cuerpo coincide con el ID de la URL.
-	if (req.body.id === id) {
-		await models.client.update(req.body, {  // Cambia 'client' por la entidad deseada.
-			where: {
-				id: id  // Filtra la actualización por el ID proporcionado.
-			}
+	if(!id) {
+		return res.status(400).json({ message: 'Debe proporcionar un ID.' });
+	}
+
+	if(!name && !email && !phone && !password) {
+		return res.status(400).json({ message: 'No hay campos para actualizar.' });
+	}
+
+	try {
+		// Verificar que el cliente exista
+		const client = await models.client.findByPk(id);
+
+		if (!client) {
+			return res.status(404).json({ message: 'Cliente no encontrado.' });
+		}
+
+		// Actualizar el cliente
+		await models.client.update({
+			name: name,
+			email: email,
+			phone: phone,
+			password: password
+		}, {
+			where: { id }
 		});
-		res.status(200).end();  // Devuelve un estado 200 (éxito) y finaliza la respuesta.
-	} else {
-		res.status(400).send(`Solicitud incorrecta: el ID del parámetro (${id}) no coincide con el ID del cuerpo (${req.body.id}).`);
+
+		return res.status(200).json({ message: 'Cliente actualizado exitosamente', cliente: client });
+	}
+	// Solo se permite la actualización si el ID del cuerpo coincide con el ID de la URL.
+	catch (error) {
+		console.error('Error al actualizar cliente:', error);
+		return res.status(500).json({ message: 'Error al actualizar cliente' });
 	}
 };
 
 // Función para eliminar un registro de la base de datos por su ID.
 // Busca el registro por el ID en la URL y lo elimina si existe.
 async function remove(req, res) {
+	return res.status(400).json({ message: 'No se puede eliminar un cliente.' });
+	/*
 	const id = getIdParam(req);  // Valida y obtiene el ID del parámetro de la URL.
 	await models.client.destroy({  // Cambia 'client' por la entidad deseada.
 		where: {
@@ -81,6 +106,7 @@ async function remove(req, res) {
 		}
 	});
 	res.status(200).end();  // Devuelve un estado 200 (éxito) y finaliza la respuesta.
+	*/
 };
 
 // Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).

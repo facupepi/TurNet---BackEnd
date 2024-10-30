@@ -9,6 +9,8 @@ const {getIdParam} = require('../helpers');
 // Función para obtener todos los registros de días laborales filtrando por ID
 // de servicio.
 async function getWorkSchedulesByService(req, res) {
+    return res.status(400).json({ message: 'No se puede obtener horarios laborales por servicio.' });
+    /*
     const {id_service} = req.params; // Obtiene el ID del servicio de los parámetros de la solicitud.
     try {
         const workSchedules = await models
@@ -34,10 +36,15 @@ async function getWorkSchedulesByService(req, res) {
             .status(500)
             .json({message: 'Error al obtener horarios'});
     }
+    */
 };
 
 // Función para obtener todos los registros de la entidad work schedules, incluyendo la time.
 async function getAll(req, res) {
+
+    return res.status(400).json({ message: 'No se puede obtener horarios laborales.' });
+    
+    /*
     try {
         const entities = await models.work_schedules.findAll({
             attributes: ['service_id'],
@@ -66,10 +73,13 @@ async function getAll(req, res) {
         console.error('Error al obtener horarios:', error);
         res.status(500).json({ message: 'Error al obtener horarios', error: error.message });
     }
+    */
 }
 
 // Función para obtener un registro específico de horarios por su ID.
 async function getById(req, res) {
+    return res.status(400).json({ message: 'No se puede obtener un horario laboral por ID.' });
+    /*
     const id = getIdParam(req);
     const entity = await models
         .work_schedules
@@ -83,9 +93,12 @@ async function getById(req, res) {
             .status(404)
             .send('404 - Not found');
     }
+    */
 };
 
 async function create(req, res) {
+    return(res.status(400).json({message: 'No se puede crear horarios laborales.'}));
+    /*
     const { startTime,  endTime, id_service } = req.body;
 
     try {
@@ -165,10 +178,14 @@ async function create(req, res) {
         console.error('Error al crear work schedules:', error);
         return res.status(500).json({ message: 'Error al crear horarios' });
     }
+    */
+    
 }
 
 // Función para actualizar un registro existente de horarios.
 async function update(req, res) {
+    return res.status(400).json({ message: 'No se puede actualizar horarios laborales.' });
+    /*
     const id = getIdParam(req);
     if (req.body.id === id) {
         await models
@@ -186,10 +203,13 @@ async function update(req, res) {
             .status(400)
             .send(`Bad request: param ID (${id}) does not match body ID (${req.body.id}).`);
     }
+    */
 };
 
 // Función para eliminar un registro de horarios por su ID.
 async function remove(req, res) {
+    return res.status(400).json({ message: 'No se puede eliminar horarios laborales.' });
+    /*
     const id = getIdParam(req);
     await models
         .work_schedules
@@ -201,6 +221,7 @@ async function remove(req, res) {
     res
         .status(200)
         .end();
+    */
 };
 
 // Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).
