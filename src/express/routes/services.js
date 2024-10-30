@@ -39,54 +39,368 @@ async function getServiceBookingsByDay(req, res) {
 }
 
 async function getAll(req, res) {
-    const entities = await models.service.findAll();
-    res.status(200).json(entities);
+    try {
+        const services = await models.service.findAll();
+
+        if (services.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron servicios.' });
+        }
+
+        const servicesWithDetails = await Promise.all(services.map(async (service) => {
+            const workSchedules = await models.work_schedules.findAll({
+                where: {
+                    service_id: service.id,
+                },
+                include: [
+                    {
+                        model: models.schedule,
+                        attributes: ['time']
+                    }
+                ]
+            });
+
+            const workDays = await models.work_days.findAll({
+                where: {
+                    service_id: service.id,
+                }
+            });
+
+            return {
+                service,
+                workSchedules,
+                workDays
+            };
+        }));
+
+        return res.status(200).json({
+            services: servicesWithDetails,
+            message: 'Servicios encontrados exitosamente.'
+        });
+    } catch (error) {
+        console.error('Error al obtener servicios:', error);
+        return res.status(500).json({ message: 'Error al obtener servicios.' });
+    }
 }
 
 async function getById(req, res) {
-    const id = getIdParam(req);
-    const entity = await models.service.findByPk(id);
-    if (entity) {
-        res.status(200).json(entity);
-    } else {
-        res.status(404).send('404 - Not found');
+    const { id } = req.params; // Obtiene el ID del servicio de los parámetros de la solicitud.
+    if (!id) {
+        return res.status(400).json({ message: 'Debe proporcionar el id del servicio.' });
     }
+
+    const serviceTemp = await models.service.findByPk(id);
+
+    console.log(id);
+    console.log(JSON.stringify(serviceTemp));
+
+    if (serviceTemp) {
+        
+    
+    const workSchedules = await models
+        .work_schedules
+        .findAll({
+            where: {
+                    service_id: id, // Filtra los registros por ID dservicio.
+            },
+                include: [
+                {
+                    model: models.schedule, // Incluye la entidad 'schedule'.
+                    attributes: ['time'] // Especifica que solo quiereobtener el campo 'time'.
+                }
+            ]
+        });
+
+        const workDays = await models.work_days.findAll({
+            where: {
+                service_id: id,  // Filtra los registros por ID de servicio.
+            }
+        });
+
+        return res.status(200).json({
+            service: serviceTemp,
+            workSchedules: workSchedules,
+            workDays: workDays,
+            message: 'Servicio encontrado exitosamente.'
+        });
+        } else {
+            res.status(404).send('404 - Not found');
+        }   
+    
 }
 
 async function create(req, res) {
-    if (req.body.id) {
-        return res.status(400).send(`Solicitud incorrecta: el ID no debe ser proporcionado, ya que es determinado automáticamente por la base de datos.`);
+    const { name, price, duration, reservation_period, days, startTime, endTime } = req.body;
+
+    if (!name || !price || !duration || !reservation_period || !startTime || !endTime) {
+        return res.status(400).json({ message: 'Faltan parámetros obligatorios: name, price, duration, reservation_period, startTime, endTime.' });
     }
+
+    const weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    if (!days || days.length === 0) {
+        return res.status(400).json({ message: 'Debe proporcionar al menos un día laboral.' });
+    }
+
+    const invalidDays = days.filter(day => !weekDays.includes(day));
+    if (invalidDays.length > 0) {
+        return res.status(400).json({ message: `Los siguientes días son inválidos: ${invalidDays.join(', ')}` });
+    }
+
     try {
-        const newService = await models.service.create(req.body);
-        return res.status(201).json(newService);
-    } catch (error) {
-        console.error('Error al crear el service:', error);
-        if (error.name === 'SequelizeValidationError') {
-            return res.status(400).json({ message: 'Error de validación: ' + error.errors.map(e => e.message).join(', ') });
+        // Crear el nuevo servicio
+        const newService = await models.service.create({
+            name: name,
+            price: price,
+            duration: duration,
+            reservation_period: reservation_period
+        });
+
+        // Crear los días laborales para el nuevo servicio
+        const workDays = days.map(day => ({
+            service_id: newService.id,
+            name: day
+        }));
+
+        const newWorkDays = await models.work_days.bulkCreate(workDays, { returning: true });
+
+        // Generar los work schedules basados en la duración del servicio
+        const durationMinutes = newService.duration; // Extraemos la duración del servicio (en minutos)
+
+        // Convertimos la hora de inicio y fin a objetos Date para poder manipularlos
+        const startTimeDate = new Date(`1970-01-01T${startTime}:00`);
+        let endTimeDate = new Date(`1970-01-01T${endTime}:00`);
+
+        // Si la hora de fin es menor a la hora de inicio, asumimos que cruza la medianoche y ajustamos la fecha
+        if (endTimeDate <= startTimeDate) {
+            endTimeDate.setDate(endTimeDate.getDate() + 1); // Avanzamos al día siguiente
         }
-        return res.status(500).json({ message: 'Error al crear el servicio' });
+
+        // Inicializamos un array para almacenar los horarios generados
+        let workSchedules = [];
+
+        // Generamos los horarios a partir de la hora de inicio, incrementando según la duración del servicio
+        let currentHour = startTimeDate;
+
+        // Bucle que va generando los horarios hasta alcanzar o pasar la hora de fin
+        while (currentHour <= endTimeDate) {
+            // Convertimos la hora actual a formato "HH:MM:SS"
+            const formattedTime = currentHour.toTimeString().slice(0, 8); // Aseguramos formato HH:MM:SS
+
+            // Buscamos en la base de datos el horario que coincide con la hora generada
+            const schedule = await models.schedule.findOne({
+                where: { time: formattedTime }
+            });
+
+            // Si el schedule existe en la base de datos, lo agregamos a la lista de work schedules
+            if (schedule) {
+                workSchedules.push({
+                    service_id: newService.id,
+                    schedule_id: schedule.id, // Usamos el ID del schedule recuperado
+                    time: formattedTime // También almacenamos la time formateada
+                });
+            }
+
+            // Incrementamos la hora actual según la duración del servicio (en minutos)
+            currentHour.setMinutes(currentHour.getMinutes() + durationMinutes);
+        }
+
+        // Verificamos si se generaron work schedules
+        if (workSchedules.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron horarios dentro del rango especificado.' });
+        }
+
+        // Usamos bulkCreate para insertar todos los registros en la tabla 'work_schedules'
+        await models.work_schedules.bulkCreate(
+            workSchedules.map(schedule_temp => ({
+                service_id: schedule_temp.service_id,
+                schedule_id: schedule_temp.schedule_id
+            }))
+        );
+
+        // Respondemos con éxito, incluyendo los horarios generados en el mensaje
+        return res.status(201).json({
+            message: 'Servicio, días laborales y horarios creados exitosamente',
+            service: newService,
+            workDays: newWorkDays.map(newWorkDay => ({
+                service_id: newWorkDay.service_id,
+                name: newWorkDay.name
+            })),
+            workSchedules: workSchedules.map(schedule_temp => ({
+                schedule_id: schedule_temp.schedule_id,
+                time: schedule_temp.time
+            })) // Incluimos tanto el ID como la time
+        });
+
+    } catch (error) {
+        // Manejamos cualquier error que ocurra durante la ejecución
+        console.error('Error al crear el servicio, días laborales y horarios:', error);
+        return res.status(500).json({ message: 'Error al crear el servicio, días laborales y horarios', error: error });
     }
 }
 
 async function update(req, res) {
-    const id = getIdParam(req);
-    if (req.body.id === id) {
+    const { name, price, duration, reservation_period, days, startTime, endTime } = req.body;
+    const { id } = req.params;
+
+    if (!name || !price || !duration || !reservation_period || !startTime || !endTime) {
+        return res.status(400).json({ message: 'Faltan parámetros obligatorios: name, price, duration, reservation_period, startTime, endTime.' });
+    }
+
+    const weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+    if (!days || days.length === 0) {
+        return res.status(400).json({ message: 'Debe proporcionar al menos un día laboral.' });
+    }
+
+    const invalidDays = days.filter(day => !weekDays.includes(day));
+    if (invalidDays.length > 0) {
+        return res.status(400).json({ message: `Los siguientes días son inválidos: ${invalidDays.join(', ')}` });
+    }
+
+    try {
+        const service = await models.service.findByPk(id);
+        if (!service) {
+            return res.status(404).json({ message: 'Servicio no encontrado.' });
+        }
+
+        const previousDuration = service.duration;
+        const previousStartTime = service.startTime;
+        const previousEndTime = service.endTime;
+
         await models.service.update(req.body, {
             where: { id: id }
         });
-        res.status(200).end();
-    } else {
-        res.status(400).send(`Bad request: param ID (${id}) does not match body ID (${req.body.id}).`);
+
+        const updatedService = await models.service.findByPk(id);
+
+        // Verificar si los días, la duración o las horas de inicio y fin han cambiado
+        const currentWorkDays = await models.work_days.findAll({
+            where: { service_id: id }
+        });
+
+        const currentDays = currentWorkDays.map(workDay => workDay.name);
+        const daysChanged = currentDays.length !== days.length || currentDays.some(day => !days.includes(day));
+        const durationChanged = previousDuration !== duration;
+        const timeChanged = previousStartTime !== startTime || previousEndTime !== endTime;
+
+        if (daysChanged || durationChanged || timeChanged) {
+            // Eliminar todos los días laborales y horarios laborales existentes para el servicio
+            await models.work_days.destroy({
+                where: { service_id: id }
+            });
+
+            await models.work_schedules.destroy({
+                where: { service_id: id }
+            });
+
+            // Crear los nuevos días laborales
+            const workDays = days.map(day => ({
+                service_id: id,
+                name: day
+            }));
+
+            const newWorkDays = await models.work_days.bulkCreate(workDays, { returning: true });
+
+            // Generar los work schedules basados en la duración del servicio
+            const durationMinutes = updatedService.duration; // Extraemos la duración del servicio (en minutos)
+
+            // Convertimos la hora de inicio y fin a objetos Date para poder manipularlos
+            const startTimeDate = new Date(`1970-01-01T${startTime}:00`);
+            let endTimeDate = new Date(`1970-01-01T${endTime}:00`);
+
+            // Si la hora de fin es menor a la hora de inicio, asumimos que cruza la medianoche y ajustamos la fecha
+            if (endTimeDate <= startTimeDate) {
+                endTimeDate.setDate(endTimeDate.getDate() + 1); // Avanzamos al día siguiente
+            }
+
+            // Inicializamos un array para almacenar los horarios generados
+            let workSchedules = [];
+
+            // Generamos los horarios a partir de la hora de inicio, incrementando según la duración del servicio
+            let currentHour = startTimeDate;
+
+            // Bucle que va generando los horarios hasta alcanzar o pasar la hora de fin
+            while (currentHour <= endTimeDate) {
+                // Convertimos la hora actual a formato "HH:MM:SS"
+                const formattedTime = currentHour.toTimeString().slice(0, 8); // Aseguramos formato HH:MM:SS
+
+                // Buscamos en la base de datos el horario que coincide con la hora generada
+                const schedule = await models.schedule.findOne({
+                    where: { time: formattedTime }
+                });
+
+                // Si el schedule existe en la base de datos, lo agregamos a la lista de work schedules
+                if (schedule) {
+                    workSchedules.push({
+                        service_id: id,
+                        schedule_id: schedule.id, // Usamos el ID del schedule recuperado
+                        time: formattedTime // También almacenamos la time formateada
+                    });
+                }
+
+                // Incrementamos la hora actual según la duración del servicio (en minutos)
+                currentHour.setMinutes(currentHour.getMinutes() + durationMinutes);
+            }
+
+            // Verificamos si se generaron work schedules
+            if (workSchedules.length === 0) {
+                return res.status(404).json({ message: 'No se encontraron horarios dentro del rango especificado.' });
+            }
+
+            // Usamos bulkCreate para insertar todos los registros en la tabla 'work_schedules'
+            await models.work_schedules.bulkCreate(
+                workSchedules.map(schedule_temp => ({
+                    service_id: schedule_temp.service_id,
+                    schedule_id: schedule_temp.schedule_id
+                }))
+            );
+
+            // Respondemos con éxito, incluyendo los horarios generados en el mensaje
+            return res.status(200).json({
+                message: 'Servicio, días laborales y horarios actualizados exitosamente',
+                service: updatedService,
+                workDays: newWorkDays.map(newWorkDay => ({
+                    service_id: newWorkDay.service_id,
+                    name: newWorkDay.name
+                })),
+                workSchedules: workSchedules.map(schedule_temp => ({
+                    schedule_id: schedule_temp.schedule_id,
+                    time: schedule_temp.time
+                })) // Incluimos tanto el ID como la time
+            });
+        }
+
+        const work_schedules = await models.work_schedules.findAll({
+            where: { service_id: id },
+            include: [
+                {
+                    model: models.schedule, // Incluye la entidad 'schedule'.
+                    attributes: ['time'] // Especifica que solo quieres obtener el campo 'time'.
+                }
+            ]
+        });
+
+        return res.status(200).json({
+            message: 'Servicio actualizado correctamente.',
+            service: updatedService,
+            work_schedules: work_schedules
+        });
+    } catch (error) {
+        console.error('Error al actualizar el servicio:', error);
+        return res.status(500).json({ message: 'Error al actualizar el servicio.' });
     }
 }
 
 async function remove(req, res) {
+    return res.status(400).json({ message: 'No se puede eliminar un servicio.' });
+    
+    /*
     const id = getIdParam(req);
     await models.service.destroy({
         where: { id: id }
     });
     res.status(200).end();
+    */
 }
 
 module.exports = {

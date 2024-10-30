@@ -81,9 +81,11 @@ for (const [routeName, routeController] of Object.entries(routes)) {
 }
 
 // Definimos rutas adicionales específicas que no siguen el patrón REST.
-app.get('/services/:id_service/schedules', makeHandlerAwareOfAsyncErrors(routes.work_schedules.getWorkSchedulesByService));
+//app.get('/services/:id_service/schedules', makeHandlerAwareOfAsyncErrors(routes.work_schedules.getWorkSchedulesByService));
 
 app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.services.getServiceBookingsByDay));
+
+app.get('/bookings/clients/:id_client', makeHandlerAwareOfAsyncErrors(routes.bookings.getBookingsByIDClient));
 
 
 // Exportamos la aplicación para poder ser utilizada en otro lugar (como en 'index.js' o para pruebas).

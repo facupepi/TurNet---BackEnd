@@ -11,9 +11,44 @@ async function getAll(req, res) {
 	res.status(200).json(entities);  // Devuelve un estado 200 (éxito) junto con los datos.
 };
 
+async function getBookingsByIDClient(req, res) {
+    const { id_client } = req.params;
+    try {
+        if (!id_client) {
+            return res.status(400).json({ message: 'Debe proporcionar el ID del cliente.' });
+        }
+
+        const client = await models.client.findByPk(id_client);
+
+        console.log('\n\n\nCliente:', client);
+
+        if (!client) {
+            return res.status(404).json({ message: 'Cliente no encontrado.' });
+        }
+
+        const entities = await models.booking.findAll({
+            where: { 
+                client_id: id_client 
+            }
+        });
+
+        console.log('\n\n\nCliente:', entities);
+
+        entities.sort((a, b) => b.id - a.id);
+
+        res.status(200).json({ message: 'Reservas obtenidas exitosamente.', bookings: entities });
+
+        } catch (error) {
+        console.error('Error al obtener bookings:', error);
+        return res.status(500).json({ message: 'Error al obtener reservas.' });
+    }
+}
+
 // Función para obtener un registro específico por su ID.
 // Valida el ID, busca el registro en la base de datos y lo devuelve en formato JSON.
 async function getById(req, res) {
+    return res.status(400).json({ message: 'No se puede obtener una reserva por ID.' });
+    /*
 	const id = getIdParam(req);  // Valida y convierte el ID a número.
 	const entity = await models.booking.findByPk(id);  // Cambia 'booking' por la entidad deseada.
 	if (entity) {
@@ -21,6 +56,7 @@ async function getById(req, res) {
 	} else {
 		res.status(404).send('404 - Not found');  // Si no se encuentra, devuelve un error 404.
 	}
+    */
 };
 
 async function create(req, res) {
@@ -116,6 +152,8 @@ async function create(req, res) {
 // Función para actualizar un registro existente.
 // Acepta la actualización solo si el ID del parámetro de la URL coincide con el ID del cuerpo de la solicitud.
 async function update(req, res) {
+    return res.status(400).json({ message: 'No se puede actualizar una reserva.' });
+    /*
 	const id = getIdParam(req);  // Valida y obtiene el ID del parámetro de la URL.
 
 	// Solo se permite la actualización si el ID del cuerpo coincide con el ID de la URL.
@@ -129,11 +167,14 @@ async function update(req, res) {
 	} else {
 		res.status(400).send(`Bad request: param ID (${id}) does not match body ID (${req.body.id}).`);
 	}
+    */
 };
 
 // Función para eliminar un registro de la base de datos por su ID.
 // Busca el registro por el ID en la URL y lo elimina si existe.
 async function remove(req, res) {
+    return res.status(400).json({ message: 'No se puede eliminar una reserva.' });
+    /*
 	const id = getIdParam(req);  // Valida y obtiene el ID del parámetro de la URL.
 	await models.booking.destroy({  // Cambia 'booking' por la entidad deseada.
 		where: {
@@ -141,6 +182,7 @@ async function remove(req, res) {
 		}
 	});
 	res.status(200).end();  // Devuelve un estado 200 (éxito) y finaliza la respuesta.
+    */
 };
 
 // Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).
@@ -150,4 +192,5 @@ module.exports = {
 	create,    // Función para crear un nuevo registro.
 	update,    // Función para actualizar un registro existente.
 	remove,    // Función para eliminar un registro.
+    getBookingsByIDClient
 };
