@@ -1,6 +1,8 @@
 // Importamos el objeto 'models' de Sequelize, que contiene todas las entidades del modelo de datos.
 const { models } = require('../../sequelize');
 
+const bcryptjs = require('bcryptjs');
+
 // Importamos la función de ayuda para validar y obtener el ID de los parámetros de la solicitud.
 const { getIdParam } = require('../helpers');
 
@@ -37,7 +39,9 @@ async function getByEmailPassword(req, res) {
 		res.status(404).send({ message: 'Inicio de Sesion Fallido',  errors: {"client" : "Cliente No Encontrado"} , client: null });  // Si no se encuentra, devuelve un error 404.
 	}
 	else{
-		if(client.password === password){
+        let hashSaved = client.passwordHash;
+        let passwordMatch = await bcryptjs.compare(password, hashSaved);
+		if(passwordMatch){
 			res.status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client });  // Si el registro existe, lo devuelve con un estado 200.
 		}
 		else{
@@ -62,17 +66,17 @@ async function create(req, res) {
 
         if (existingClient) formErrors.email = 'El email ya está registrado.';
         
-
         if (Object.keys(formErrors).length > 0) return res.status(400).json({ message: 'Error al crear cliente' , errors: formErrors, newCliente: null });
         
-
+        let passwordHash = await bcryptjs.hash(password, 8);
+        
         // Crear el nuevo cliente
         const newClient = await models.client.create({
             first_name,
             last_name,
             email,
             phone,
-            password
+            passwordHash
         });
 
         return res.status(201).json({ message: 'Cliente creado exitosamente',  errors: {} , newClient: newClient });
