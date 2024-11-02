@@ -2,6 +2,8 @@
 const express = require('express');  // Carga el framework Express, que facilita la creación de servidores web.
 const bodyParser = require('body-parser');  // Permite analizar el cuerpo de las solicitudes entrantes (JSON, datos de formularios).
 
+const cors = require('cors');
+
 // Definimos las rutas que gestionarán diferentes partes de la aplicación.
 // Cada propiedad de 'routes' corresponde a un conjunto de rutas que se gestionan en archivos separados.
 const routes = {
@@ -13,6 +15,8 @@ const routes = {
 
 // Inicializamos una instancia de la aplicación Express.
 const app = express();
+
+app.use(cors());
 
 // Configuramos el middleware para analizar el cuerpo de las solicitudes.
 // 'bodyParser.json()' analiza el cuerpo de las solicitudes en formato JSON.
@@ -82,6 +86,8 @@ for (const [routeName, routeController] of Object.entries(routes)) {
 app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.services.getServiceBookingsByDay));
 
 app.get('/bookings/clients/:id_client', makeHandlerAwareOfAsyncErrors(routes.bookings.getBookingsByIDClient));
+
+app.get("/login", makeHandlerAwareOfAsyncErrors(routes.clients.getByEmailPassword));
 
 
 // Exportamos la aplicación para poder ser utilizada en otro lugar (como en 'index.js' o para pruebas).

@@ -4,13 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-  "start": "cross-env NODE_ENV=dev NODE_CONFIG_DIR=./src/config/ nodemon -w src --exec \"./node_modules/.bin/babel-node src/index.js --presets es2015,stage-0\""
-  }
-  ,
+    "start": "cross-env NODE_ENV=dev NODE_CONFIG_DIR=./src/config/ nodemon -w src --exec \"./node_modules/.bin/babel-node src/index.js --presets es2015,stage-0\""
+  },
   "author": "Facundo Pepino",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
     "express": "^4.21.0",
     "install": "^0.13.0",
     "npm": "^10.9.0",
@@ -24,8 +24,8 @@
     "babel-preset-stage-0": "^6.24.1",
     "chai": "^4.1.2",
     "chai-http": "^3.0.0",
+    "cross-env": "^7.0.3",
     "mocha": "^3.5.3",
-    "nodemon": "^1.11.0",
-    "cross-env": "^7.0.3"
+    "nodemon": "^1.11.0"
   }
 }
