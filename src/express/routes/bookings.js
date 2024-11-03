@@ -20,8 +20,6 @@ async function getBookingsByIDClient(req, res) {
 
         const client = await models.client.findByPk(id_client);
 
-        console.log('\n\n\nCliente:', client);
-
         if (!client) {
             return res.status(404).json({ message: 'Cliente no encontrado.' });
         }
@@ -31,8 +29,6 @@ async function getBookingsByIDClient(req, res) {
                 client_id: id_client 
             }
         });
-
-        console.log('\n\n\nCliente:', entities);
 
         entities.sort((a, b) => b.id - a.id);
 

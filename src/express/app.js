@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');  // Permite analizar el cuerpo de las
 
 const cors = require('cors');
 
+const validateToken = require('./helpers').validateToken;
+
 // Definimos las rutas que gestionarán diferentes partes de la aplicación.
 // Cada propiedad de 'routes' corresponde a un conjunto de rutas que se gestionan en archivos separados.
 const routes = {
@@ -48,6 +50,7 @@ for (const [routeName, routeController] of Object.entries(routes)) {
     if (routeController.getAll) {
         app.get(
             `/${routeName}`,  // Define la ruta en el formato '/clientes', '/items', etc.
+              // Valida el token de acceso antes de ejecutar el controlador.
             makeHandlerAwareOfAsyncErrors(routeController.getAll)  // Asigna el controlador y maneja errores async.
         );
     }
@@ -85,7 +88,7 @@ for (const [routeName, routeController] of Object.entries(routes)) {
 
 app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.services.getServiceBookingsByDay));
 
-app.get('/bookings/clients/:id_client', makeHandlerAwareOfAsyncErrors(routes.bookings.getBookingsByIDClient));
+app.get('/bookings/clients/:id_client', validateToken, makeHandlerAwareOfAsyncErrors(routes.bookings.getBookingsByIDClient));
 
 app.get("/login", makeHandlerAwareOfAsyncErrors(routes.clients.getByEmailPassword));
 

@@ -2,6 +2,8 @@
 // Por defecto, los parámetros de la URL vienen como strings, 
 // pero necesitamos que el 'id' sea un número para realizar operaciones correctas.
 
+const jwt = require('jsonwebtoken');
+
 function getIdParam(req) {
     // Extraemos el parámetro 'id' de los parámetros de la solicitud (req.params).
     const id = req.params.id;
@@ -20,4 +22,19 @@ function getIdParam(req) {
 }
 
 // Exportamos la función para que pueda ser usada en otros módulos.
-module.exports = { getIdParam };
+
+const validateToken = (req, res, next) => {
+    const accessToken = req.header('authorization');
+    if (!accessToken) return res.status(401).json({ message: 'Acesso Denegado.', errors : {token : 'Token invalido o vencido.'} });
+  
+    try {
+        const validToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+        req.user = validToken;
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: 'Acesso Denegado.', errors : {token : 'Token invalido o vencido.'} });
+    }
+};
+
+module.exports = { getIdParam , validateToken };
+
