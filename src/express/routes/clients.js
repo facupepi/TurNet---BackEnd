@@ -1,7 +1,12 @@
 // Importamos el objeto 'models' de Sequelize, que contiene todas las entidades del modelo de datos.
 const { models } = require('../../sequelize');
-
+// Importamos la librería 'bcryptjs' para encriptar contraseñas.
 const bcryptjs = require('bcryptjs');
+// Importamos la librería 'jsonwebtoken' para generar tokens de acceso.
+const jwt = require('jsonwebtoken');
+// Cargamos las variables de entorno desde el archivo '.env'.
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Importamos la función de ayuda para validar y obtener el ID de los parámetros de la solicitud.
 const { getIdParam } = require('../helpers');
@@ -42,7 +47,9 @@ async function getByEmailPassword(req, res) {
         let hashSaved = client.passwordHash;
         let passwordMatch = await bcryptjs.compare(password, hashSaved);
 		if(passwordMatch){
-			res.status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client });  // Si el registro existe, lo devuelve con un estado 200.
+            // Generar token de acceso
+            const accessToken = jwt.sign( {email : client.email} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.header('authorization', accessToken).status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client });  // Si el registro existe, lo devuelve con un estado 200.
 		}
 		else{
 			res.status(404).send({ message: 'Inicio de Sesion Fallido',  errors: {"client" : "Contraseña Incorrecta"} , client: null });  // Si no se encuentra, devuelve un error 404.
@@ -216,13 +223,13 @@ const validateFormLogin = (formData) => {
     let formErrors = {};
 
     if (!formData.email) {
-      formErrors.email = 'El correo electrónico es obligatorio.';
+        formErrors.email = 'El correo electrónico es obligatorio.';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      formErrors.email = 'El correo electrónico no es válido.';
+        formErrors.email = 'El correo electrónico no es válido.';
     } 
 
     if (!formData.password) {
-      formErrors.password = 'La contraseña es obligatoria.';
+        formErrors.password = 'La contraseña es obligatoria.';
     } 
 
     return formErrors;

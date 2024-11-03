@@ -4,8 +4,13 @@ const app = require('./express/app');
 // Importamos la instancia de Sequelize, que manejará la conexión a la base de datos.
 const sequelize = require('./sequelize');
 
-// Definimos el puerto en el que escuchará el servidor Express.
-const PORT = 8080;
+// Carga las variables de entorno
+import dotenv from 'dotenv';
+dotenv.config();
+
+// Define el puerto
+const PORT = process.env.PORT; // Añade un valor por defecto si es necesario
+console.log(PORT);
 
 // Función para verificar si la conexión con la base de datos es correcta.
 async function assertDatabaseConnectionOk() {
