@@ -32,10 +32,10 @@ async function getById(req, res) {
 
 // Función para obtener un registro específico por su Email.
 // Valida el email, busca el registro en la base de datos y lo devuelve en formato JSON.
-async function getByEmailPassword(req, res) {
-	const { email, password } = req.query;  // Valida y convierte el email y la contraseña.
+async function login(req, res) {
+	const { email, password } = req.body;  // Valida y convierte el email y la contraseña.
 
-	const formErrors = validateFormLogin(req.query);
+	const formErrors = validateFormLogin(req.body);
 	if (Object.keys(formErrors).length > 0) return res.status(400).json({ message: 'Error al iniciar sesion' , errors: formErrors, client: null });
 
 	const client = await models.client.findOne({ where: { email } });  
@@ -49,6 +49,9 @@ async function getByEmailPassword(req, res) {
 		if(passwordMatch){
             // Generar token de acceso
             const accessToken = jwt.sign( {email : client.email} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            
+            res.setHeader("Access-Control-Expose-Headers", "Authorization"); // Exponer el header 'Authorization'
+            
             res.header('authorization', accessToken).status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client });  // Si el registro existe, lo devuelve con un estado 200.
 		}
 		else{
@@ -159,7 +162,7 @@ module.exports = {
 	create,    // Función para crear un nuevo registro.
 	update,    // Función para actualizar un registro existente.
 	remove,    // Función para eliminar un registro.
-	getByEmailPassword, // Función para validar el inicio de sesión
+	login, // Función para validar el inicio de sesión
 };
 
 

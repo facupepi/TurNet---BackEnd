@@ -90,8 +90,9 @@ app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.s
 
 app.get('/bookings/clients/:id_client', validateToken, makeHandlerAwareOfAsyncErrors(routes.bookings.getBookingsByIDClient));
 
-app.get("/login", makeHandlerAwareOfAsyncErrors(routes.clients.getByEmailPassword));
+app.post("/login", makeHandlerAwareOfAsyncErrors(routes.clients.login));
 
+app.post("/auth", validateToken, (req, res) => {return res.status(200).json({ message: 'Acesso Permitido.' });});
 
 // Exportamos la aplicación para poder ser utilizada en otro lugar (como en 'index.js' o para pruebas).
 module.exports = app;

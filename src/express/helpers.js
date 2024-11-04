@@ -29,7 +29,7 @@ const validateToken = (req, res, next) => {
   
     try {
         const validToken = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
-        req.user = validToken;
+        console.log("\nToken Valido: ", validToken);
         next();
     } catch (error) {
         return res.status(401).json({ message: 'Acesso Denegado.', errors : {token : 'Token invalido o vencido.'} });
