@@ -13,6 +13,7 @@ async function getAll(req, res) {
 
 async function getBookingsByIDClient(req, res) {
     const { id_client } = req.params;
+    
     try {
         if (!id_client) {
             return res.status(400).json({ message: 'Debe proporcionar el ID del cliente.' });

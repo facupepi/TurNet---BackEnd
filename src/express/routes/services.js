@@ -1,6 +1,95 @@
 const { models } = require('../../sequelize');
 const { getIdParam } = require('../helpers');
 
+async function getAvailableTimesByServiceAndDate(req, res) {
+    const { id_service } = req.params;
+    const { date } = req.query;
+
+    try {
+        // Validar los parámetros de la solicitud
+        if (!date || !id_service) {
+            return res.status(400).json({ message: 'Debe proporcionar la fecha y el id del servicio.' });
+        }
+
+        // Convertir la fecha solicitada a un objeto Date
+        let requestedDate = new Date(date);
+
+        // Forzar la hora a medianoche UTC para evitar desplazamientos por zona horaria
+        requestedDate.setUTCHours(0, 0, 0, 0);
+
+        // Validar que la fecha solicitada sea válida
+        if (isNaN(requestedDate.getTime())) {
+            return res.status(400).json({ message: 'La fecha proporcionada no es válida.' });
+        }
+
+        // Obtener los días laborables para el servicio
+        const workDays = await models.work_days.findAll({
+            where: { service_id: id_service }
+        });
+
+        console.log('Días laborales configurados:', workDays);
+
+        // Obtener el día de la semana de la fecha solicitada (0 = Domingo, 1 = Lunes, ..., 6 = Sábado)
+        const dayOfWeek = requestedDate.getUTCDay(); // Usamos getUTCDay() para obtener el día de la semana en UTC
+        console.log('Día de la semana de la fecha solicitada:', dayOfWeek);
+
+        // Convertir el número del día de la semana a un nombre de día en español
+        const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        const dayName = daysOfWeek[dayOfWeek]; // Ejemplo: Si dayOfWeek es 5, dayName será "Viernes"
+        console.log('Nombre del día de la semana:', dayName);
+
+        // Verificar si la fecha solicitada es un día laboral
+        const isWorkDay = workDays.some(workDay => workDay.name === dayName);
+
+        if (!isWorkDay) {
+            return res.status(404).json({ message: 'La fecha solicitada no es un día laboral para este servicio.' });
+        }
+
+        // Obtener los horarios de trabajo para el servicio
+        const workSchedules = await models.work_schedules.findAll({
+            where: { service_id: id_service },
+            include: [{ model: models.schedule, attributes: ['time'] }]
+        });
+
+        console.log('Horarios de trabajo encontrados:', workSchedules);
+
+        // Obtener las reservas para el servicio y la fecha solicitada
+        const bookings = await models.booking.findAll({
+            where: { service_id: id_service, date: date },
+            include: [{ model: models.service, attributes: ['name', 'price'] }]
+        });
+
+        console.log('Reservas encontradas:', bookings);
+
+        // Si no hay reservas, todos los horarios de trabajo están disponibles
+        if (bookings.length === 0) {
+            const availableTimes = workSchedules.map(schedule => schedule.schedule.time);
+            console.log('Horarios disponibles (sin reservas):', availableTimes);
+            return res.status(200).json({ availableTimes });
+        }
+
+        // Filtrar los horarios ocupados (ya reservados)
+        const bookedTimes = bookings.map(booking => booking.time);
+        console.log('Horarios reservados:', bookedTimes);
+
+        const availableTimes = workSchedules
+            .map(schedule => schedule.schedule.time)
+            .filter(time => !bookedTimes.includes(time)); // Excluir los horarios ocupados
+
+        // Si no hay horarios disponibles
+        if (availableTimes.length === 0) {
+            return res.status(404).json({ message: 'No hay horarios disponibles para la fecha y servicio especificados.' });
+        }
+
+        // Devolver los horarios disponibles
+        console.log('Horarios disponibles:', availableTimes);
+        return res.status(200).json({ availableTimes });
+    } catch (error) {
+        console.error('Error al obtener horarios disponibles:', error);
+        return res.status(500).json({ message: 'Error al obtener horarios disponibles.' });
+    }
+}
+
 async function getServiceBookingsByDay(req, res) {
     const { id_service } = req.params;
     const { date } = req.query;
@@ -17,10 +106,6 @@ async function getServiceBookingsByDay(req, res) {
             },
             include: [
                 {
-                    model: models.client,
-                    attributes: ['name', 'email']
-                },
-                {
                     model: models.service,
                     attributes: ['name', 'price']
                 }
@@ -33,7 +118,7 @@ async function getServiceBookingsByDay(req, res) {
 
         return res.status(200).json(bookings);
     } catch (error) {
-        console.error('Error al obtener bookings:', error);
+        console.error('Error al obtener reservas:', error);
         return res.status(500).json({ message: 'Error al obtener reservas.' });
     }
 }
@@ -409,5 +494,6 @@ module.exports = {
     create,
     update,
     remove,
-    getServiceBookingsByDay
+    getServiceBookingsByDay,
+    getAvailableTimesByServiceAndDate
 };
