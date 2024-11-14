@@ -2,9 +2,17 @@
 const express = require('express');  // Carga el framework Express, que facilita la creación de servidores web.
 const bodyParser = require('body-parser');  // Permite analizar el cuerpo de las solicitudes entrantes (JSON, datos de formularios).
 
+const cookieParser = require('cookie-parser');
+
+const jwt = require('jsonwebtoken');
+const { models } = require('./../sequelize');
+
 const cors = require('cors');
 
 const validateToken = require('./helpers').validateToken;
+
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Definimos las rutas que gestionarán diferentes partes de la aplicación.
 // Cada propiedad de 'routes' corresponde a un conjunto de rutas que se gestionan en archivos separados.
@@ -18,7 +26,14 @@ const routes = {
 // Inicializamos una instancia de la aplicación Express.
 const app = express();
 
-app.use(cors());
+// Configuramos la aplicación para que use 'cookie-parser' y analice las cookies de las solicitudes.
+app.use(cookieParser());
+
+// Configuramos la aplicación para que use CORS y permita solicitudes desde el cliente.
+app.use(cors({
+    origin: process.env.FRONTEND_URL, // Cambia esto a la URL de tu cliente
+    credentials: true
+}));
 
 // Configuramos el middleware para analizar el cuerpo de las solicitudes.
 // 'bodyParser.json()' analiza el cuerpo de las solicitudes en formato JSON.
@@ -85,12 +100,22 @@ for (const [routeName, routeController] of Object.entries(routes)) {
 }
 
 // Definimos rutas adicionales específicas que no siguen el patrón REST.
+app.get('/services', makeHandlerAwareOfAsyncErrors(routes.services.getAll));
 
 app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.services.getServiceBookingsByDay));
 
 app.get('/bookings/clients/:id_client', validateToken, makeHandlerAwareOfAsyncErrors(routes.bookings.getBookingsByIDClient));
 
-app.get("/login", makeHandlerAwareOfAsyncErrors(routes.clients.getByEmailPassword));
+app.post("/login", makeHandlerAwareOfAsyncErrors(routes.clients.login));
+
+app.post("/auth", validateToken, makeHandlerAwareOfAsyncErrors(routes.clients.auth));
+
+app.post('/logout', makeHandlerAwareOfAsyncErrors(routes.clients.logout));
+
+app.get('/services/:id_service/available-times',validateToken, makeHandlerAwareOfAsyncErrors(routes.services.getAvailableTimesByServiceAndDate));
+
+
+
 
 
 // Exportamos la aplicación para poder ser utilizada en otro lugar (como en 'index.js' o para pruebas).

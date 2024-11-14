@@ -9,7 +9,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Importamos la función de ayuda para validar y obtener el ID de los parámetros de la solicitud.
-const { getIdParam } = require('../helpers');
+const { corsHeaders, getIdParam , validateFormLogin, validateFormRegister} = require('../helpers');
 
 // Función para obtener todos los registros de la entidad.
 // Realiza una consulta a la base de datos y devuelve los resultados en formato JSON.
@@ -30,12 +30,32 @@ async function getById(req, res) {
 	}
 };
 
+async function auth(req, res) {
+    const accessToken = req.cookies.accessToken;
+
+    let id = jwt.decode(accessToken).id;
+
+    const entity = await models.client.findByPk(id);  // Cambia 'client' por la entidad deseada.
+
+    console.log("Entity: ", entity);
+    if (entity) {
+        res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
+    } else {
+        res.status(404).send('404 - No encontrado');  // Si no se encuentra, devuelve un error 404.
+    }
+}
+
+async function logout(req, res) {
+    res.clearCookie('accessToken');
+    res.status(200).json({ message: 'Sesion Cerrada' });
+}
+
 // Función para obtener un registro específico por su Email.
 // Valida el email, busca el registro en la base de datos y lo devuelve en formato JSON.
-async function getByEmailPassword(req, res) {
-	const { email, password } = req.query;  // Valida y convierte el email y la contraseña.
+async function login(req, res) {
+	const { email, password } = req.body;  // Valida y convierte el email y la contraseña.
 
-	const formErrors = validateFormLogin(req.query);
+	const formErrors = validateFormLogin(req.body);
 	if (Object.keys(formErrors).length > 0) return res.status(400).json({ message: 'Error al iniciar sesion' , errors: formErrors, client: null });
 
 	const client = await models.client.findOne({ where: { email } });  
@@ -48,8 +68,17 @@ async function getByEmailPassword(req, res) {
         let passwordMatch = await bcryptjs.compare(password, hashSaved);
 		if(passwordMatch){
             // Generar token de acceso
-            const accessToken = jwt.sign( {email : client.email} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
-            res.header('authorization', accessToken).status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client });  // Si el registro existe, lo devuelve con un estado 200.
+            const accessToken = jwt.sign( {id : client.id} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            
+            //res.setHeader("Access-Control-Expose-Headers", "Authorization"); // Exponer el header 'Authorization'
+
+            // Configuración de los encabezados HTTP para permitir solicitudes CORS (Cross-Origin Resource Sharing)
+            res.header(corsHeaders);
+
+            res.cookie('accessToken', accessToken, { maxAge: 24 * 60 * 60 * 1000 , httpOnly: true}); // Setear la cookie 'accessToken' con duración de 30 segundos
+
+            //res.header('authorization', accessToken)
+            res.status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client });  // Si el registro existe, lo devuelve con un estado 200.
 		}
 		else{
 			res.status(404).send({ message: 'Inicio de Sesion Fallido',  errors: {"client" : "Contraseña Incorrecta"} , client: null });  // Si no se encuentra, devuelve un error 404.
@@ -64,7 +93,7 @@ async function create(req, res) {
 
     try {
         // Validar los datos del formulario
-        const formErrors = validateForm(req.body);
+        const formErrors = validateFormRegister(req.body);
         
         // Verificar que no exista un cliente con el mismo email
         const existingClient = await models.client.findOne({
@@ -159,78 +188,8 @@ module.exports = {
 	create,    // Función para crear un nuevo registro.
 	update,    // Función para actualizar un registro existente.
 	remove,    // Función para eliminar un registro.
-	getByEmailPassword, // Función para validar el inicio de sesión
+	login, // Función para validar el inicio de sesión
+    auth,
+    logout
 };
 
-
-// Función para validar los datos del formulario
-
-const validateForm = (formData) => {
-    let formErrors = {};
-    
-    if (!formData.first_name) {
-        formErrors.first_name = 'El nombre es obligatorio.';
-    } else if (!/^[a-zA-Z]+$/.test(formData.first_name)) {
-        formErrors.first_name = 'El nombre solo puede contener caracteres alfabéticos.';
-    } else if (formData.first_name.length < 2) {
-        formErrors.first_name = 'El nombre debe tener al menos 2 caracteres.';
-    } else if (formData.first_name.length > 50) {
-        formErrors.first_name = 'El nombre no puede tener más de 50 caracteres.';
-    }
-    
-    if (!formData.last_name) {
-        formErrors.last_name = 'El apellido es obligatorio.';
-    } else if (!/^[a-zA-Z]+$/.test(formData.last_name)) {
-        formErrors.last_name = 'El apellido solo puede contener caracteres alfabéticos.';
-    } else if (formData.last_name.length < 2) {
-        formErrors.last_name = 'El apellido debe tener al menos 2 caracteres.';
-    } else if (formData.last_name.length > 50) {
-        formErrors.last_name = 'El apellido no puede tener más de 50 caracteres.';
-    }
-    
-    if (!formData.phone) {
-        formErrors.phone = 'El teléfono es obligatorio.';
-    } else if (!/^\d+$/.test(formData.phone)) {
-        formErrors.phone = 'El teléfono solo puede contener números.';
-    } else if (formData.phone.length < 7) {
-        formErrors.phone = 'El teléfono debe tener al menos 7 caracteres.';
-    } else if (formData.phone.length > 15) {
-        formErrors.phone = 'El teléfono no puede tener más de 15 caracteres.';
-    }
-
-    if (!formData.email) {
-        formErrors.email = 'El correo electrónico es obligatorio.';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        formErrors.email = 'El correo electrónico no es válido.';
-    } else if (formData.email.length < 5) {
-        formErrors.email = 'El correo electrónico debe tener al menos 5 caracteres.';
-    } else if (formData.email.length > 50) {
-        formErrors.email = 'El correo electrónico no puede tener más de 50 caracteres.';
-    }
-
-    if (!formData.password) {
-        formErrors.password = 'La contraseña es obligatoria.';
-    } else if (formData.password.length < 8) {
-        formErrors.password = 'La contraseña debe tener al menos 8 caracteres.';
-    } else if (formData.password.length > 50) {
-        formErrors.password = 'La contraseña no puede tener más de 50 caracteres.';
-    }
-
-    return formErrors;
-};
-
-const validateFormLogin = (formData) => {
-    let formErrors = {};
-
-    if (!formData.email) {
-        formErrors.email = 'El correo electrónico es obligatorio.';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-        formErrors.email = 'El correo electrónico no es válido.';
-    } 
-
-    if (!formData.password) {
-        formErrors.password = 'La contraseña es obligatoria.';
-    } 
-
-    return formErrors;
-  };

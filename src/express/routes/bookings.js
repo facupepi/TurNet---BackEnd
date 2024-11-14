@@ -13,6 +13,7 @@ async function getAll(req, res) {
 
 async function getBookingsByIDClient(req, res) {
     const { id_client } = req.params;
+    
     try {
         if (!id_client) {
             return res.status(400).json({ message: 'Debe proporcionar el ID del cliente.' });
@@ -24,15 +25,22 @@ async function getBookingsByIDClient(req, res) {
             return res.status(404).json({ message: 'Cliente no encontrado.' });
         }
 
-        const entities = await models.booking.findAll({
-            where: { 
+        const bookings = await models.booking.findAll({
+            where: {
                 client_id: id_client 
-            }
+            },
+            include: [
+                {
+                    model: models.service,
+                    attributes: ['name', 'price']
+                }
+            ]
         });
 
-        entities.sort((a, b) => b.id - a.id);
 
-        res.status(200).json({ message: 'Reservas obtenidas exitosamente.', bookings: entities });
+        bookings.sort((a, b) => b.id - a.id);
+
+        res.status(200).json({ message: 'Reservas obtenidas exitosamente.', bookings: bookings });
 
         } catch (error) {
         console.error('Error al obtener bookings:', error);
