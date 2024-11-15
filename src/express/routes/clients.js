@@ -9,45 +9,21 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Importamos la función de ayuda para validar y obtener el ID de los parámetros de la solicitud.
-const { corsHeaders, getIdParam , validateFormLogin, validateFormRegister} = require('../helpers');
-
-// Función para obtener todos los registros de la entidad.
-// Realiza una consulta a la base de datos y devuelve los resultados en formato JSON.
-async function getAll(req, res) {
-	const entities = await models.client.findAll();  // Cambia 'client' por la entidad deseada.
-	res.status(200).json(entities);  // Devuelve un estado 200 (éxito) junto con los datos.
-};
-
-// Función para obtener un registro específico por su ID.
-// Valida el ID, busca el registro en la base de datos y lo devuelve en formato JSON.
-async function getById(req, res) {
-	const id = getIdParam(req);  // Valida y convierte el ID a número.
-	const entity = await models.client.findByPk(id);  // Cambia 'client' por la entidad deseada.
-	if (entity) {
-		res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
-	} else {
-		res.status(404).send('404 - No encontrado');  // Si no se encuentra, devuelve un error 404.
-	}
-};
+const { corsHeaders , validateFormLogin, validateFormRegister} = require('../helpers');
 
 async function auth(req, res) {
     const accessToken = req.cookies.accessToken;
 
     let id = jwt.decode(accessToken).id;
+	let role = jwt.decode(accessToken).role;
 
     const entity = await models.client.findByPk(id);  // Cambia 'client' por la entidad deseada.
-
-    console.log("Entity: ", entity);
+	
     if (entity) {
         res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
     } else {
         res.status(404).send('404 - No encontrado');  // Si no se encuentra, devuelve un error 404.
     }
-}
-
-async function logout(req, res) {
-    res.clearCookie('accessToken');
-    res.status(200).json({ message: 'Sesion Cerrada' });
 }
 
 // Función para obtener un registro específico por su Email.
@@ -68,7 +44,7 @@ async function login(req, res) {
         let passwordMatch = await bcryptjs.compare(password, hashSaved);
 		if(passwordMatch){
             // Generar token de acceso
-            const accessToken = jwt.sign( {id : client.id} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            const accessToken = jwt.sign( {id : client.id, role: client.role} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
             
             //res.setHeader("Access-Control-Expose-Headers", "Authorization"); // Exponer el header 'Authorization'
 
@@ -78,7 +54,9 @@ async function login(req, res) {
             res.cookie('accessToken', accessToken, { maxAge: 24 * 60 * 60 * 1000 , httpOnly: true}); // Setear la cookie 'accessToken' con duración de 30 segundos
 
             //res.header('authorization', accessToken)
-            res.status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client });  // Si el registro existe, lo devuelve con un estado 200.
+			if(client.role == 'admin')res.status(200).json({ message: 'Inicio de Sesion De Admin Exitoso',  errors: {} , client: client});  
+			// Si el registro existe, lo devuelve con un estado 200.
+			else res.status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client , admin: false});  // Si el registro existe, lo devuelve con un estado 200.
 		}
 		else{
 			res.status(404).send({ message: 'Inicio de Sesion Fallido',  errors: {"client" : "Contraseña Incorrecta"} , client: null });  // Si no se encuentra, devuelve un error 404.
@@ -88,7 +66,7 @@ async function login(req, res) {
 
 // Función para crear un nuevo registro en la base de datos.
 // Valida que el cuerpo de la solicitud no incluya un ID, ya que este se genera automáticamente.
-async function create(req, res) {
+async function register(req, res) {
     const { first_name, last_name, email, phone, password } = req.body;
 
     try {
@@ -112,7 +90,8 @@ async function create(req, res) {
             last_name,
             email,
             phone,
-            passwordHash
+            passwordHash,
+			role: 'client'
         });
 
         return res.status(201).json({ message: 'Cliente creado exitosamente',  errors: {} , newClient: newClient });
@@ -122,6 +101,16 @@ async function create(req, res) {
     }
 };
 
+// Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).
+module.exports = {
+	register,    // Función para crear un nuevo registro.
+	login, // Función para validar el inicio de sesión
+    auth
+};
+
+
+
+/*
 // Función para actualizar un registro existente.
 // Acepta la actualización solo si el ID del parámetro de la URL coincide con el ID del cuerpo de la solicitud.
 async function update(req, res) {
@@ -166,6 +155,7 @@ async function update(req, res) {
 	}
 };
 
+
 // Función para eliminar un registro de la base de datos por su ID.
 // Busca el registro por el ID en la URL y lo elimina si existe.
 async function remove(req, res) {
@@ -178,18 +168,28 @@ async function remove(req, res) {
 		}
 	});
 	res.status(200).end();  // Devuelve un estado 200 (éxito) y finaliza la respuesta.
-	*/
 };
 
-// Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).
-module.exports = {
-	getAll,    // Función para obtener todos los registros.
-	getById,   // Función para obtener un registro por ID.
-	create,    // Función para crear un nuevo registro.
-	update,    // Función para actualizar un registro existente.
-	remove,    // Función para eliminar un registro.
-	login, // Función para validar el inicio de sesión
-    auth,
-    logout
+// Función para obtener todos los registros de la entidad.
+// Realiza una consulta a la base de datos y devuelve los resultados en formato JSON.
+
+async function getAll(req, res) {
+	const entities = await models.client.findAll();  // Cambia 'client' por la entidad deseada.
+	res.status(200).json(entities);  // Devuelve un estado 200 (éxito) junto con los datos.
 };
 
+
+// Función para obtener un registro específico por su ID.
+// Valida el ID, busca el registro en la base de datos y lo devuelve en formato JSON.
+async function getById(req, res) {
+	const id = getIdParam(req);  // Valida y convierte el ID a número.
+	const entity = await models.client.findByPk(id);  // Cambia 'client' por la entidad deseada.
+	if (entity) {
+		res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
+	} else {
+		res.status(404).send('404 - No encontrado');  // Si no se encuentra, devuelve un error 404.
+	}
+};
+
+
+*/

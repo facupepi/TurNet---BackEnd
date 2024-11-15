@@ -6,9 +6,20 @@ const { getIdParam } = require('../helpers');
 
 // Función para obtener todos los registros de la entidad.
 // Realiza una consulta a la base de datos y devuelve los resultados en formato JSON.
-async function getAll(req, res) {
-	const entities = await models.booking.findAll();  // Cambia 'booking' por la entidad deseada.
-	res.status(200).json(entities);  // Devuelve un estado 200 (éxito) junto con los datos.
+async function getAllBookings(req, res) {
+	const bookings = await models.booking.findAll({
+        include: [
+            {
+                model: models.service,
+                attributes: ['name', 'price']
+            },
+            {
+                model: models.client,
+                attributes: ['first_name', 'last_name']
+            }
+        ]
+    })
+	res.status(200).json(bookings);  // Devuelve un estado 200 (éxito) junto con los datos.
 };
 
 async function getBookingsByIDClient(req, res) {
@@ -48,22 +59,7 @@ async function getBookingsByIDClient(req, res) {
     }
 }
 
-// Función para obtener un registro específico por su ID.
-// Valida el ID, busca el registro en la base de datos y lo devuelve en formato JSON.
-async function getById(req, res) {
-    return res.status(400).json({ message: 'No se puede obtener una reserva por ID.' });
-    /*
-	const id = getIdParam(req);  // Valida y convierte el ID a número.
-	const entity = await models.booking.findByPk(id);  // Cambia 'booking' por la entidad deseada.
-	if (entity) {
-		res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
-	} else {
-		res.status(404).send('404 - Not found');  // Si no se encuentra, devuelve un error 404.
-	}
-    */
-};
-
-async function create(req, res) {
+async function createBooking(req, res) {
     const { id_client, id_service, date, time } = req.body;
 
     try {
@@ -153,11 +149,32 @@ async function create(req, res) {
     }
 }
 
+// Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).
+module.exports = {
+	getAllBookings,    // Función para obtener todos los registros.
+	createBooking,    // Función para crear un nuevo registro.
+    getBookingsByIDClient
+};
+
+
+/*
+// Función para obtener un registro específico por su ID.
+// Valida el ID, busca el registro en la base de datos y lo devuelve en formato JSON.
+async function getById(req, res) {
+    return res.status(400).json({ message: 'No se puede obtener una reserva por ID.' });
+	const id = getIdParam(req);  // Valida y convierte el ID a número.
+	const entity = await models.booking.findByPk(id);  // Cambia 'booking' por la entidad deseada.
+	if (entity) {
+		res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
+	} else {
+		res.status(404).send('404 - Not found');  // Si no se encuentra, devuelve un error 404.
+	}
+};
+
 // Función para actualizar un registro existente.
 // Acepta la actualización solo si el ID del parámetro de la URL coincide con el ID del cuerpo de la solicitud.
 async function update(req, res) {
     return res.status(400).json({ message: 'No se puede actualizar una reserva.' });
-    /*
 	const id = getIdParam(req);  // Valida y obtiene el ID del parámetro de la URL.
 
 	// Solo se permite la actualización si el ID del cuerpo coincide con el ID de la URL.
@@ -171,14 +188,12 @@ async function update(req, res) {
 	} else {
 		res.status(400).send(`Bad request: param ID (${id}) does not match body ID (${req.body.id}).`);
 	}
-    */
 };
 
 // Función para eliminar un registro de la base de datos por su ID.
 // Busca el registro por el ID en la URL y lo elimina si existe.
 async function remove(req, res) {
     return res.status(400).json({ message: 'No se puede eliminar una reserva.' });
-    /*
 	const id = getIdParam(req);  // Valida y obtiene el ID del parámetro de la URL.
 	await models.booking.destroy({  // Cambia 'booking' por la entidad deseada.
 		where: {
@@ -186,15 +201,6 @@ async function remove(req, res) {
 		}
 	});
 	res.status(200).end();  // Devuelve un estado 200 (éxito) y finaliza la respuesta.
-    */
 };
 
-// Exportamos las funciones para que puedan ser usadas en otros módulos (rutas).
-module.exports = {
-	getAll,    // Función para obtener todos los registros.
-	getById,   // Función para obtener un registro por ID.
-	create,    // Función para crear un nuevo registro.
-	update,    // Función para actualizar un registro existente.
-	remove,    // Función para eliminar un registro.
-    getBookingsByIDClient
-};
+*/

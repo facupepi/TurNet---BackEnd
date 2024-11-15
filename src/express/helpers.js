@@ -2,11 +2,15 @@
 // Por defecto, los parámetros de la URL vienen como strings, 
 // pero necesitamos que el 'id' sea un número para realizar operaciones correctas.
 
+// Importamos el objeto 'models' de Sequelize, que contiene todas las entidades del modelo de datos.
+const { models } = require('../sequelize');
+
 const jwt = require('jsonwebtoken');
 
 import dotenv from 'dotenv';
 dotenv.config();
 
+/*
 function getIdParam(req) {
     // Extraemos el parámetro 'id' de los parámetros de la solicitud (req.params).
     const id = req.params.id;
@@ -23,6 +27,7 @@ function getIdParam(req) {
     // Esto permite manejar el error en el código que llama a esta función, como una mala solicitud (400).
     throw new TypeError(`Invalid ':id' param: "${id}"`);
 }
+*/
 
 // Exportamos la función para que pueda ser usada en otros módulos.
 
@@ -111,6 +116,20 @@ const validateFormLogin = (formData) => {
     return formErrors;
 };
 
+const validateAdmin  = (req, res, next) => {
+    const accessToken = req.cookies.accessToken;
+
+    const id = jwt.decode(accessToken).id;
+    const role = jwt.decode(accessToken).role;
+    
+    models.client.findOne({ where: { id } }).then(admin => {
+        if (admin && role === 'admin') next();
+        else return res.status(401).json({ message: 'Acesso Denegado.', errors : {token : 'Token invalido o vencido.'} });
+    }).catch(error => {
+        return res.status(500).json({ message: 'Error interno del servidor.', errors: { error: error.message } });
+    });
+};
+
 const corsHeaders = {
     "Access-Control-Allow-Origin": process.env.FRONTEND_URL,
     "Access-Control-Allow-Credentials": "true",
@@ -118,5 +137,5 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE"
 };
 
-module.exports = { corsHeaders, getIdParam , validateToken , validateFormRegister , validateFormLogin };
+module.exports = { corsHeaders , validateToken , validateFormRegister , validateFormLogin, validateAdmin  };
 

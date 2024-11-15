@@ -1,5 +1,4 @@
 const { models } = require('../../sequelize');
-const { getIdParam } = require('../helpers');
 
 async function getAvailableTimesByServiceAndDate(req, res) {
     const { id_service } = req.params;
@@ -90,40 +89,9 @@ async function getAvailableTimesByServiceAndDate(req, res) {
     }
 }
 
-async function getServiceBookingsByDay(req, res) {
-    const { id_service } = req.params;
-    const { date } = req.query;
 
-    try {
-        if (!date || !id_service) {
-            return res.status(400).json({ message: 'Debe proporcionar la fecha y el id del servicio.' });
-        }
 
-        const bookings = await models.booking.findAll({
-            where: {
-                service_id: id_service,
-                date: date
-            },
-            include: [
-                {
-                    model: models.service,
-                    attributes: ['name', 'price']
-                }
-            ]
-        });
-
-        if (bookings.length === 0) {
-            return res.status(404).json({ message: 'No se encontraron reservas para la fecha y service especificados.' });
-        }
-
-        return res.status(200).json(bookings);
-    } catch (error) {
-        console.error('Error al obtener reservas:', error);
-        return res.status(500).json({ message: 'Error al obtener reservas.' });
-    }
-}
-
-async function getAll(req, res) {
+async function getAllServices(req, res) {
     try {
         const services = await models.service.findAll();
 
@@ -167,53 +135,7 @@ async function getAll(req, res) {
     }
 }
 
-async function getById(req, res) {
-    const { id } = req.params; // Obtiene el ID del servicio de los parámetros de la solicitud.
-    if (!id) {
-        return res.status(400).json({ message: 'Debe proporcionar el id del servicio.' });
-    }
-
-    const serviceTemp = await models.service.findByPk(id);
-
-    console.log(id);
-    console.log(JSON.stringify(serviceTemp));
-
-    if (serviceTemp) {
-        
-    
-    const workSchedules = await models
-        .work_schedules
-        .findAll({
-            where: {
-                    service_id: id, // Filtra los registros por ID dservicio.
-            },
-                include: [
-                {
-                    model: models.schedule, // Incluye la entidad 'schedule'.
-                    attributes: ['time'] // Especifica que solo quiereobtener el campo 'time'.
-                }
-            ]
-        });
-
-        const workDays = await models.work_days.findAll({
-            where: {
-                service_id: id,  // Filtra los registros por ID de servicio.
-            }
-        });
-
-        return res.status(200).json({
-            service: serviceTemp,
-            workSchedules: workSchedules,
-            workDays: workDays,
-            message: 'Servicio encontrado exitosamente.'
-        });
-        } else {
-            res.status(404).send('404 - Not found');
-        }   
-    
-}
-
-async function create(req, res) {
+async function createService(req, res) {
     const { name, price, duration, reservation_period, days, startTime, endTime } = req.body;
 
     if (!name || !price || !duration || !reservation_period || !startTime || !endTime) {
@@ -323,6 +245,14 @@ async function create(req, res) {
     }
 }
 
+module.exports = {
+    getAllServices,
+    createService,
+    getAvailableTimesByServiceAndDate
+};
+
+
+/*
 async function update(req, res) {
     const { name, price, duration, reservation_period, days, startTime, endTime } = req.body;
     const { id } = req.params;
@@ -476,24 +406,92 @@ async function update(req, res) {
     }
 }
 
+
 async function remove(req, res) {
     return res.status(400).json({ message: 'No se puede eliminar un servicio.' });
-    
-    /*
     const id = getIdParam(req);
     await models.service.destroy({
         where: { id: id }
     });
     res.status(200).end();
-    */
 }
 
-module.exports = {
-    getAll,
-    getById,
-    create,
-    update,
-    remove,
-    getServiceBookingsByDay,
-    getAvailableTimesByServiceAndDate
-};
+async function getById(req, res) {
+    const { id } = req.params; // Obtiene el ID del servicio de los parámetros de la solicitud.
+    if (!id) {
+        return res.status(400).json({ message: 'Debe proporcionar el id del servicio.' });
+    }
+
+    const serviceTemp = await models.service.findByPk(id);
+
+    console.log(id);
+    console.log(JSON.stringify(serviceTemp));
+
+    if (serviceTemp) {
+        
+    
+    const workSchedules = await models
+        .work_schedules
+        .findAll({
+            where: {
+                    service_id: id, // Filtra los registros por ID dservicio.
+            },
+                include: [
+                {
+                    model: models.schedule, // Incluye la entidad 'schedule'.
+                    attributes: ['time'] // Especifica que solo quiereobtener el campo 'time'.
+                }
+            ]
+        });
+
+        const workDays = await models.work_days.findAll({
+            where: {
+                service_id: id,  // Filtra los registros por ID de servicio.
+            }
+        });
+
+        return res.status(200).json({
+            service: serviceTemp,
+            workSchedules: workSchedules,
+            workDays: workDays,
+            message: 'Servicio encontrado exitosamente.'
+        });
+        } else {
+            res.status(404).send('404 - Not found');
+        }   
+    
+}
+
+async function getServiceBookingsByDay(req, res) {
+    const { id_service } = req.params;
+    const { date } = req.query;
+
+    try {
+        if (!date || !id_service) {
+            return res.status(400).json({ message: 'Debe proporcionar la fecha y el id del servicio.' });
+        }
+
+        const bookings = await models.booking.findAll({
+            where: {
+                service_id: id_service,
+                date: date
+            },
+            include: [
+                {
+                    model: models.service,
+                    attributes: ['name', 'price']
+                }
+            ]
+        });
+
+        if (bookings.length === 0) {
+            return res.status(404).json({ message: 'No se encontraron reservas para la fecha y service especificados.' });
+        }
+
+        return res.status(200).json(bookings);
+    } catch (error) {
+        console.error('Error al obtener reservas:', error);
+        return res.status(500).json({ message: 'Error al obtener reservas.' });
+    }
+}
+*/
