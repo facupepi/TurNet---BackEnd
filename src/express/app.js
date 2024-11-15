@@ -3,13 +3,10 @@ const express = require('express');  // Carga el framework Express, que facilita
 const bodyParser = require('body-parser');  // Permite analizar el cuerpo de las solicitudes entrantes (JSON, datos de formularios).
 
 const cookieParser = require('cookie-parser');
-
-const jwt = require('jsonwebtoken');
-const { models } = require('./../sequelize');
-
 const cors = require('cors');
 
 const validateToken = require('./helpers').validateToken;
+const validateAdmin = require('./helpers').validateAdmin;
 
 import dotenv from 'dotenv';
 dotenv.config();
@@ -57,64 +54,41 @@ function makeHandlerAwareOfAsyncErrors(handler) {
     };
 }
 
-// Definimos las rutas estándar REST (GET, POST, PUT, DELETE) para cada uno de los controladores definidos en 'routes'.
-// Recorremos todas las entradas del objeto 'routes' (clientes, items, orders, etc.).
-for (const [routeName, routeController] of Object.entries(routes)) {
-    // Si el controlador tiene un método 'getAll', creamos una ruta GET para obtener todos los registros.
-    if (routeController.getAll) {
-        app.get(
-            `/${routeName}`,  // Define la ruta en el formato '/clientes', '/items', etc.
-              // Valida el token de acceso antes de ejecutar el controlador.
-            makeHandlerAwareOfAsyncErrors(routeController.getAll)  // Asigna el controlador y maneja errores async.
-        );
-    }
-    // Si el controlador tiene un método 'getById', creamos una ruta GET con un parámetro ':id' para obtener un registro por ID.
-    if (routeController.getById) {
-        app.get(
-            `/${routeName}/:id`,  // Ruta en formato '/clientes/:id', etc.
-            makeHandlerAwareOfAsyncErrors(routeController.getById)
-        );
-    }
-    // Si el controlador tiene un método 'create', creamos una ruta POST para crear un nuevo registro.
-    if (routeController.create) {
-        app.post(
-            `/${routeName}`,  // Ruta para crear un nuevo recurso, como '/clientes', etc.
-            makeHandlerAwareOfAsyncErrors(routeController.create)
-        );
-    }
-    // Si el controlador tiene un método 'update', creamos una ruta PUT para actualizar un registro existente.
-    if (routeController.update) {
-        app.put(
-            `/${routeName}/:id`,  // Ruta en formato '/clientes/:id', etc., para actualizar por ID.
-            makeHandlerAwareOfAsyncErrors(routeController.update)
-        );
-    }
-    // Si el controlador tiene un método 'remove', creamos una ruta DELETE para eliminar un registro por ID.
-    if (routeController.remove) {
-        app.delete(
-            `/${routeName}/:id`,  // Ruta en formato '/clientes/:id', etc., para eliminar por ID.
-            makeHandlerAwareOfAsyncErrors(routeController.remove)
-        );
-    }
-}
-
 // Definimos rutas adicionales específicas que no siguen el patrón REST.
-app.get('/services', makeHandlerAwareOfAsyncErrors(routes.services.getAll));
+app.get('/services', makeHandlerAwareOfAsyncErrors(routes.services.getAllServices));
 
-app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.services.getServiceBookingsByDay));
+// Rutas para obtener los turnos de un servicio para un día en específico
+//app.get('/services/:id_service/bookings', makeHandlerAwareOfAsyncErrors(routes.services.getServiceBookingsByDay));
 
+// Rutas para obtener los turnos de un cliente en específico
 app.get('/bookings/clients/:id_client', validateToken, makeHandlerAwareOfAsyncErrors(routes.bookings.getBookingsByIDClient));
 
+// Rutas para loguear y autenticar un usuario (sea admin o cliente)
 app.post("/login", makeHandlerAwareOfAsyncErrors(routes.clients.login));
-
 app.post("/auth", validateToken, makeHandlerAwareOfAsyncErrors(routes.clients.auth));
 
+// Rutas para cerrar la sesión de un usuario
 app.post('/logout', makeHandlerAwareOfAsyncErrors( (req, res) => {
     res.clearCookie('accessToken');
     res.status(200).json({ message: 'Sesion Cerrada' });
 }));
 
+// Rutas para obtener los turnos disponibles de un servicio
 app.get('/services/:id_service/available-times',validateToken, makeHandlerAwareOfAsyncErrors(routes.services.getAvailableTimesByServiceAndDate));
+
+// Rutas para crear un turno
+app.post('/bookings', validateToken, makeHandlerAwareOfAsyncErrors(routes.bookings.createBooking));
+
+// Rutas para registrarse
+app.post('/clients', makeHandlerAwareOfAsyncErrors(routes.clients.register));
+
+//RUTAS PARA ADMIN
+
+// Rutas para obtener los servicios
+app.post('/services', validateToken, validateAdmin, makeHandlerAwareOfAsyncErrors(routes.services.createService));
+
+// Rutas para obtener los turnos
+app.get('/bookings', validateToken, validateAdmin, makeHandlerAwareOfAsyncErrors(routes.bookings.getAllBookings));
 
 // Exportamos la aplicación para poder ser utilizada en otro lugar (como en 'index.js' o para pruebas).
 module.exports = app;

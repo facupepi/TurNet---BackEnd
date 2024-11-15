@@ -19,9 +19,7 @@ const sequelize = new Sequelize({
 // Definimos una lista de modelos que queremos incluir en la base de datos.
 // Cada archivo en './models' representa un modelo diferente (como categoría, ítem, orden, etc.).
 const modelDefiners = [
-	require('./models/admin.model'),  // Importa el modelo 'admin'.
 	require('./models/client.model'),  // Importa el modelo 'client'.
-	//require('./models/day.model'),  // Importa el modelo 'day'.
 	require('./models/schedule.model'),  // Importa el modelo 'schedule'.
 	require('./models/work_schedules.model'),  // Importa el modelo 'work_schedules'.
 	require('./models/work_days.model'),  // Importa el modelo 'work_days'.
