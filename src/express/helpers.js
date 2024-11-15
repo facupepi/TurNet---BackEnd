@@ -111,6 +111,7 @@ const validateFormLogin = (formData) => {
     return formErrors;
 };
 
+
 const corsHeaders = {
     "Access-Control-Allow-Origin": process.env.FRONTEND_URL,
     "Access-Control-Allow-Credentials": "true",
@@ -118,5 +119,5 @@ const corsHeaders = {
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS, PUT, DELETE"
 };
 
-module.exports = { corsHeaders, getIdParam , validateToken , validateFormRegister , validateFormLogin };
+module.exports = { corsHeaders, getIdParam , validateToken , validateFormRegister , validateFormLogin  };
 

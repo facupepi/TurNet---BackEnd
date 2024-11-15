@@ -34,20 +34,15 @@ async function auth(req, res) {
     const accessToken = req.cookies.accessToken;
 
     let id = jwt.decode(accessToken).id;
+	let role = jwt.decode(accessToken).role;
 
     const entity = await models.client.findByPk(id);  // Cambia 'client' por la entidad deseada.
-
-    console.log("Entity: ", entity);
+	
     if (entity) {
         res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
     } else {
         res.status(404).send('404 - No encontrado');  // Si no se encuentra, devuelve un error 404.
     }
-}
-
-async function logout(req, res) {
-    res.clearCookie('accessToken');
-    res.status(200).json({ message: 'Sesion Cerrada' });
 }
 
 // Función para obtener un registro específico por su Email.
@@ -68,7 +63,7 @@ async function login(req, res) {
         let passwordMatch = await bcryptjs.compare(password, hashSaved);
 		if(passwordMatch){
             // Generar token de acceso
-            const accessToken = jwt.sign( {id : client.id} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            const accessToken = jwt.sign( {id : client.id, role: client.role} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
             
             //res.setHeader("Access-Control-Expose-Headers", "Authorization"); // Exponer el header 'Authorization'
 
@@ -78,7 +73,9 @@ async function login(req, res) {
             res.cookie('accessToken', accessToken, { maxAge: 24 * 60 * 60 * 1000 , httpOnly: true}); // Setear la cookie 'accessToken' con duración de 30 segundos
 
             //res.header('authorization', accessToken)
-            res.status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client });  // Si el registro existe, lo devuelve con un estado 200.
+			if(client.role == 'admin')res.status(200).json({ message: 'Inicio de Sesion De Admin Exitoso',  errors: {} , client: client});  
+			// Si el registro existe, lo devuelve con un estado 200.
+			else res.status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , client: client , admin: false});  // Si el registro existe, lo devuelve con un estado 200.
 		}
 		else{
 			res.status(404).send({ message: 'Inicio de Sesion Fallido',  errors: {"client" : "Contraseña Incorrecta"} , client: null });  // Si no se encuentra, devuelve un error 404.
@@ -112,7 +109,8 @@ async function create(req, res) {
             last_name,
             email,
             phone,
-            passwordHash
+            passwordHash,
+			role: 'client'
         });
 
         return res.status(201).json({ message: 'Cliente creado exitosamente',  errors: {} , newClient: newClient });
@@ -189,7 +187,6 @@ module.exports = {
 	update,    // Función para actualizar un registro existente.
 	remove,    // Función para eliminar un registro.
 	login, // Función para validar el inicio de sesión
-    auth,
-    logout
+    auth
 };
 

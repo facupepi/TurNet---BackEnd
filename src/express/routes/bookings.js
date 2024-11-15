@@ -7,8 +7,19 @@ const { getIdParam } = require('../helpers');
 // Función para obtener todos los registros de la entidad.
 // Realiza una consulta a la base de datos y devuelve los resultados en formato JSON.
 async function getAll(req, res) {
-	const entities = await models.booking.findAll();  // Cambia 'booking' por la entidad deseada.
-	res.status(200).json(entities);  // Devuelve un estado 200 (éxito) junto con los datos.
+	const bookings = await models.booking.findAll({
+        include: [
+            {
+                model: models.service,
+                attributes: ['name', 'price']
+            },
+            {
+                model: models.client,
+                attributes: ['first_name', 'last_name']
+            }
+        ]
+    })
+	res.status(200).json(bookings);  // Devuelve un estado 200 (éxito) junto con los datos.
 };
 
 async function getBookingsByIDClient(req, res) {

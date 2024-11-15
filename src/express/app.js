@@ -18,7 +18,6 @@ dotenv.config();
 // Cada propiedad de 'routes' corresponde a un conjunto de rutas que se gestionan en archivos separados.
 const routes = {
     clients: require('./routes/clients'),  // Ruta para gestionar 'clientes'.
-    admins: require('./routes/admins'),  // Ruta para gestionar 'admins'.
     services: require('./routes/services'),  // Ruta para gestionar 'servicios'.
     bookings: require('./routes/bookings'),  // Ruta para gestionar 'servicios'
 };
@@ -110,13 +109,12 @@ app.post("/login", makeHandlerAwareOfAsyncErrors(routes.clients.login));
 
 app.post("/auth", validateToken, makeHandlerAwareOfAsyncErrors(routes.clients.auth));
 
-app.post('/logout', makeHandlerAwareOfAsyncErrors(routes.clients.logout));
+app.post('/logout', makeHandlerAwareOfAsyncErrors( (req, res) => {
+    res.clearCookie('accessToken');
+    res.status(200).json({ message: 'Sesion Cerrada' });
+}));
 
 app.get('/services/:id_service/available-times',validateToken, makeHandlerAwareOfAsyncErrors(routes.services.getAvailableTimesByServiceAndDate));
-
-
-
-
 
 // Exportamos la aplicación para poder ser utilizada en otro lugar (como en 'index.js' o para pruebas).
 module.exports = app;

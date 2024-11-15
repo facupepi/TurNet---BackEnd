@@ -1,8 +1,65 @@
 // Importamos el objeto 'models' de Sequelize, que contiene todas las entidades del modelo de datos.
 const { models } = require('../../sequelize');
+// Importamos la librería 'bcryptjs' para encriptar contraseñas.
+const bcryptjs = require('bcryptjs');
+// Importamos la librería 'jsonwebtoken' para generar tokens de acceso.
+const jwt = require('jsonwebtoken');
+// Cargamos las variables de entorno desde el archivo '.env'.
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Importamos la función de ayuda para validar y obtener el ID de los parámetros de la solicitud.
-const { getIdParam } = require('../helpers');
+const { corsHeaders , validateFormLogin} = require('../helpers');
+
+async function auth(req, res) {
+    const accessToken = req.cookies.accessToken;
+
+    let id = jwt.decode(accessToken).id;
+
+    const entity = await models.admin.findByPk(id);  // Cambia 'client' por la entidad deseada.
+
+    console.log("Entity: ", entity);
+    if (entity) {
+        res.status(200).json(entity);  // Si el registro existe, lo devuelve con un estado 200.
+    } else {
+        res.status(404).send('404 - No encontrado');  // Si no se encuentra, devuelve un error 404.
+    }
+}
+
+async function login(req, res) {
+	const { email, password } = req.body;  // Valida y convierte el email y la contraseña.
+
+	const formErrors = validateFormLogin(req.body);
+	if (Object.keys(formErrors).length > 0) return res.status(400).json({ message: 'Error al iniciar sesion' , errors: formErrors, admin: null });
+
+	const admin = await models.admin.findOne({ where: { email } });  
+
+	if (!admin) {
+		res.status(404).send({ message: 'Inicio de Sesion Fallido',  errors: {"admin" : "Admin No Encontrado"} , admin: null });  // Si no se encuentra, devuelve un error 404.
+	}
+	else{
+        let hashSaved = admin.passwordHash;
+        let passwordMatch = await bcryptjs.compare(password, hashSaved);
+		if(passwordMatch){
+            // Generar token de acceso
+            const accessToken = jwt.sign( {id : admin.id} , process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            
+            //res.setHeader("Access-Control-Expose-Headers", "Authorization"); // Exponer el header 'Authorization'
+
+            // Configuración de los encabezados HTTP para permitir solicitudes CORS (Cross-Origin Resource Sharing)
+            res.header(corsHeaders);
+
+            res.cookie('accessToken', accessToken, { maxAge: 24 * 60 * 60 * 1000 , httpOnly: true}); // Setear la cookie 'accessToken' con duración de 30 segundos
+
+            //res.header('authorization', accessToken)
+            res.status(200).json({ message: 'Inicio de Sesion Exitoso',  errors: {} , admin: admin });  // Si el registro existe, lo devuelve con un estado 200.
+		}
+		else{
+			res.status(404).send({ message: 'Inicio de Sesion Fallido',  errors: {"admin" : "Contraseña Incorrecta"} , admin: null });  // Si no se encuentra, devuelve un error 404.
+		}
+	}
+};
+
 
 // Función para obtener todos los registros de la entidad.
 // Realiza una consulta a la base de datos y devuelve los resultados en formato JSON.
@@ -86,4 +143,6 @@ module.exports = {
 	create,    // Función para crear un nuevo registro.
 	update,    // Función para actualizar un registro existente.
 	remove,    // Función para eliminar un registro.
+	login, // Función para iniciar sesion
+	auth // Función para validar sesion
 };
